@@ -64,7 +64,7 @@ public static unsafe class Panthera
     private static extern void destroy_vm(IntPtr machine);
 
     [DllImport("libpanthera", EntryPoint = "randomx_calculate_hash", CallingConvention = CallingConvention.Cdecl)]
-    private static extern void calculate_hash(IntPtr machine, byte* input, int inputSize, byte* output);
+    private static extern void calculate_hash(IntPtr machine, byte* input, int inputSize, byte* output, bool b);
 
     public class GenContext
     {
@@ -152,7 +152,7 @@ public static unsafe class Panthera
             {
                 fixed (byte* output = result)
                 {
-                    calculate_hash(vm, input, data.Length, output);
+                    calculate_hash(vm, input, data.Length, output, false);
                 }
             }
         }

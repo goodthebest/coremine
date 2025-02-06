@@ -1350,6 +1350,39 @@
         "explorerTxLink": "https://livenet.flocha.in/tx/{0}",
         "explorerAccountLink": "https://livenet.flocha.in/address/{0}"
     },
+    "fortuneblock": {
+        "name": "FortuneBlock",
+        "symbol": "FTB",
+        "family": "bitcoin",
+        "website": "https://fortuneblock.xyz/",
+        "market": "",
+        "github": "https://github.com/FortuneBlockTeam/fortuneblock",
+        "explorer": "https://explorer.fortuneblock.xyz/",
+        "twitter": "https://x.com/Fortune_Block",
+        "telegram": "",
+        "discord": "https://discord.com/invite/g4rwqYHkmd",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "mike"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "sha256d"
+                }
+            ]
+        },
+        "hasFounderFee": true,
+        "hasMasterNodes": true,
+        "hasSmartNodes": true,
+        "shareMultiplier": 65536,
+        "explorerBlockLink": "https://explorer.fortuneblock.xyz/block/$hash$",
+        "explorerTxLink": "https://explorer.fortuneblock.xyz/tx/{0}",
+        "explorerAccountLink": "https://explorer.fortuneblock.xyz/address/{0}"
+    },
     "foxdcoin": {
         "name": "FoxDcoin",
         "canonicalName": "FoxDcoin",
@@ -1872,9 +1905,12 @@
         },
         "blockHasher": {
             "hash": "reverse",
-            "args": [ { "hash": "minotaurx" } ]
+            "args": [
+                {
+                    "hash": "sha256d"
+                }
+            ]
         },
-        "isPseudoPoS": true,
         "explorerBlockLink": "https://chainz.cryptoid.info/lcc/block.dws?$height$.htm",
         "explorerTxLink": "https://chainz.cryptoid.info/lcc/tx.dws?{0}.htm",
         "explorerAccountLink": "https://chainz.cryptoid.info/lcc/address.dws?{0}.htm"
@@ -2036,21 +2072,21 @@
         "explorerTxLink": "https://mazacha.in/tx/{0}",
         "explorerAccountLink": "https://mazacha.in/address/{0}"
     },
-    "maza": {
+    "maza-minotaurx": {
         "name": "Maza",
-        "canonicalName": "Maza",
+        "canonicalName": "Mazacoin Minotaurx",
         "symbol": "MAZA",
         "family": "bitcoin",
-        "website": "",
-        "market": "",
-        "twitter": "",
-        "telegram": "",
-        "discord": "",
+        "website": "http://www.mazacoin.org/",
+        "market": "https://www.coingecko.com/en/coins/maza",
+        "twitter": "https://twitter.com/MazaCoin",
+        "telegram": "https://t.me/mazatribe",
+        "discord": "https://discord.com/invite/qzd9PnzN3v",
         "coinbaseHasher": {
             "hash": "sha256d"
         },
         "headerHasher": {
-            "hash": "sha256d"
+            "hash": "minotaurx"
         },
         "blockHasher": {
             "hash": "reverse",
@@ -2692,6 +2728,39 @@
         "explorerTxLink": "https://explorer.rheix.com/tx/{0}",
         "explorerAccountLink": "https://explorer.rheix.com/address/{0}"
     },
+    "fewbit": {
+        "name": "FewBit",
+        "canonicalName": "FewBit",
+        "symbol": "FBIT",
+        "family": "bitcoin",
+        "website": "https://fewbit.net/",
+        "market": "",
+        "twitter": "",
+        "telegram": "https://t.me/+eMGB15LzvLk0MGZk",
+        "discord": "https://discord.gg/bwdsukjDyj",
+        "github": "https://github.com/FewBit-Coin/Core-Wallet",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "ghostrider"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "sha256d"
+                }
+            ]
+        },
+        "hasFounderFee": true,
+        "hasMasterNodes": true,
+        "hasSmartNodes": true,
+        "shareMultiplier": 65536,
+        "explorerBlockLink": "https://fewbit.online/block/$hash$",
+        "explorerTxLink": "https://fewbit.online/tx/{0}",
+        "explorerAccountLink": "https://fewbit.online/address/{0}"
+    },
     "gspcoin": {
         "name": "Gsp Coin",
         "canonicalName": "GspCoin",
@@ -3087,6 +3156,67 @@
         "explorerTxLink": "https://mewc.cryptoscope.io/tx/?txid={0}",
         "explorerAccountLink": "https://mewc.cryptoscope.io/address/?address={0}"
     },
+    "dogegpu": {
+        "name": "DogeGPU",
+        "symbol": "DOGPU",
+        "family": "progpow",
+        "progpower": "kawpow",
+        "website": "https://dogegpu.org/",
+        "github": "https://github.com/Masterscooper/DogeGPU",
+        "market": "",
+        "twitter": "https://x.com/dogegpu",
+        "telegram": "",
+        "discord": "https://discord.gg/Vg8WDug6Yb",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "sha256d"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "sha256d"
+                }
+            ]
+        },
+        "shareMultiplier": 1,
+        "explorerBlockLink": "https://dogpu.cryptoscope.io/block/?blockhash=$hash$",
+        "explorerTxLink": "https://dogpu.cryptoscope.io/tx/?txid={0}",
+        "explorerAccountLink": "https://dogpu.cryptoscope.io/address/?address={0}"
+    },
+    "phicoin": {
+        "name": "Phicoin",
+        "symbol": "PHI",
+        "family": "progpow",
+        "progpower": "phihash",
+        "website": "https://phicoin.net/",
+        "github": "https://github.com/PhicoinProject/phicoin",
+        "market": "",
+        "twitter": "https://x.com/PhicoinNet",
+        "telegram": "https://t.me/phicoin_official",
+        "discord": "https://discord.gg/phicoin",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "sha256d"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "sha256d"
+                }
+            ]
+        },
+        "hasCommunityAddress": true,
+        "shareMultiplier": 1,
+        "explorerBlockLink": "https://explorer.phicoin.net/block/$hash$",
+        "explorerTxLink": "https://explorer.phicoin.net/tx/{0}",
+        "explorerAccountLink": "https://explorer.phicoin.net/address/{0}"
+    },
     "telestai": {
         "name": "Telestai",
         "symbol": "TLS",
@@ -3148,6 +3278,45 @@
         "explorerBlockLink": "https://explorer.joss.network/block/$hash$",
         "explorerTxLink": "https://explorer.joss.network/tx/{0}",
         "explorerAccountLink": "https://explorer.joss.network/address/{0}"
+    },
+    "ogva": {
+        "name": "OGVA Network",
+        "symbol": "OGVA",
+        "family": "bitcoin",
+        "website": "https://ogva.net/",
+        "github": "https://github.com/ogvanetwork/ogva-core",
+        "market": "",
+        "twitter": "https://x.com/Ogva_network",
+        "telegram": "https://t.me/ogvanetwork",
+        "discord": "https://discord.gg/Z3FKGuzKXv",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "neoscrypt",
+            "args": [
+                0
+            ]
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "neoscrypt",
+                    "args": [
+                        0
+                    ]
+                }
+            ]
+        },
+        "hasFounderFee": true,
+        "hasMasterNodes": true,
+        "hasCommunity": true,
+        "hasDeveloper": true,
+        "shareMultiplier": 65536,
+        "explorerBlockLink": "https://explorer.ogva.net/block/$hash$",
+        "explorerTxLink": "https://explorer.ogva.net/tx/{0}",
+        "explorerAccountLink": "https://explorer.ogva.net/address/{0}"
     },
     "ultronai": {
         "name": "UltronAI",
@@ -6145,6 +6314,36 @@
         "explorerTxLink": "https://explorer.nvolve.tech/tx/{0}",
         "explorerAccountLink": "https://explorer.nvolve.tech/address/{0}"
     },
+    "datromax": {
+        "name": "Datromax",
+        "symbol": "DTRX",
+        "family": "bitcoin",
+        "website": "https://datromax.com/",
+        "github": "https://github.com/datromax",
+        "twitter": "https://x.com/datromax",
+        "telegram": "https://t.me/datromax",
+        "discord": "https://discord.gg/3y2j7T3y",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "blake2s"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "sha256d"
+                }
+            ]
+        },
+        "hasFounderFee": true,
+        "hasMasterNodes": true,
+        "hasSmartNodes": true,
+        "explorerBlockLink": "https://explorer.datromax.com/block/$hash$",
+        "explorerTxLink": "https://explorer.datromax.com/tx/{0}",
+        "explorerAccountLink": "https://explorer.datromax.com/address/{0}"
+    },
     "kylacoin": {
         "name": "Kylacoin",
         "symbol": "KCN",
@@ -6173,5 +6372,160 @@
         "explorerBlockLink": "https://kcnxp.com/block/$height$",
         "explorerTxLink": "https://kcnxp.com/tx/{0}",
         "explorerAccountLink": "https://kcnxp.com/address/{0}"
+    },
+    "vkax": {
+        "name": "Vkax",
+        "symbol": "VKAX",
+        "family": "bitcoin",
+        "website": "https://vkaxcore.github.io/VKAX/",
+        "market": "https://www.coingecko.com/coins/vkax",
+        "github": "https://github.com/vkaxcore/VKAX",
+        "explorer": "https://explore.vkax.net/",
+        "twitter": "",
+        "telegram": "",
+        "discord": "https://discord.gg/AKbJJqMJ7n",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "mike"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "sha256d"
+                }
+            ]
+        },
+        "hasMasterNodes": true,
+        "shareMultiplier": 65536,
+        "coinbaseMinConfimations": 200,
+        "explorerBlockLink": "https://explore.vkax.net/block/$hash$",
+        "explorerTxLink": "https://explore.vkax.net/tx/{0}",
+        "explorerAccountLink": "https://explore.vkax.net/address/{0}"
+    },
+    "akitacoin": {
+        "name": "Akitacoin",
+        "symbol": "AKIC",
+        "family": "progpow",
+        "progpower": "kawpow",
+        "website": "https://www.akitacoin.net/",
+        "github": "https://github.com/Cryptic-dev1/Akitacoin",
+        "market": "",
+        "twitter": "https://twitter.com/AkitacoinDev",
+        "telegram": "https://t.me/+58Y7__nzQgE1NzM0",
+        "discord": "https://discord.gg/juUfsDk6CS",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "sha256d"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "sha256d"
+                }
+            ]
+        },
+        "hasCommunityAddress": true,
+        "shareMultiplier": 1,
+        "explorerBlockLink": "https://akitacoin.website/block/$hash$",
+        "explorerTxLink": "https://akitacoin.website/tx/{0}",
+        "explorerAccountLink": "https://akitacoin.website/address/{0}"
+    },
+    "blobfish": {
+        "name": "Blobfish",
+        "symbol": "SQSH",
+        "family": "progpow",
+        "progpower": "kawpow",
+        "website": "https://www.blobfishcoin.meme/",
+        "github": "https://github.com/BFCD/blobfish",
+        "explorer": "https://explorer.blobfishcoin.meme/",
+        "market": "",
+        "twitter": "https://x.com/BlobfishcoinX",
+        "telegram": "",
+        "discord": "https://discord.gg/3pZ2pbUtyG",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "sha256d"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "sha256d"
+                }
+            ]
+        },
+        "hasMasterNodes": true,
+        "hasPayee": true,
+        "shareMultiplier": 1,
+        "explorerBlockLink": "https://explorer.blobfishcoin.meme/block/$hash$",
+        "explorerTxLink": "https://explorer.blobfishcoin.meme/tx/{0}",
+        "explorerAccountLink": "https://explorer.blobfishcoin.meme/address/{0}"
+    },
+    "argoneum": {
+        "name": "Argoneum",
+        "symbol": "AGM",
+        "family": "bitcoin",
+        "website": "https://argoneum.net/",
+        "github": "https://github.com/Argoneum/argoneum",
+        "market": "",
+        "twitter": "",
+        "discord": "https://discordapp.com/invite/3g6XmKE",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "phi2"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "phi2"
+                }
+            ]
+        },
+        "hasMasterNodes": true,
+        "shareMultiplier": 256,
+        "explorerBlockLink": "https://chainz.cryptoid.info/agm/block.dws?$height$.htm",
+        "explorerTxLink": "https://chainz.cryptoid.info/agm/tx.dws?{0}.htm",
+        "explorerAccountLink": "https://chainz.cryptoid.info/agm/address.dws?{0}.htm"
+    },
+    "crionic": {
+        "name": "Crionic",
+        "canonicalName": "Crionic",
+        "symbol": "CRNC",
+        "family": "bitcoin",
+        "website": "https://coin.crionic.org/",
+        "github": "https://github.com/diabaths/Crionic-Coin",
+        "twitter": "",
+        "market": "https://coinpaprika.com/coin/crnc-crionic",
+        "discord": "https://discord.com/invite/SKDkjcJTKM",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "yespowerltncg"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "sha256d"
+                }
+            ]
+        },
+        "shareMultiplier": 65536,
+        "coinbaseMinConfimations": 110,
+        "explorerBlockLink": "https://explorer.crionic.org/block/$height$",
+        "explorerTxLink": "https://explorer.crionic.org/tx/{0}",
+        "explorerAccountLink": "https://explorer.crionic.org/address/{0}"
     }
 }

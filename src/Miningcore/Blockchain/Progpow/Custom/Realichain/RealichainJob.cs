@@ -155,4 +155,87 @@ public class RealichainJob : ProgpowJob
 
     #endregion // Masternodes
  
+    #region Community
+
+    protected override Money CreateCommunityOutputs(Transaction tx, Money reward)
+    {
+        if (communityParameters.Community != null)
+        {
+            Community[] communitys;
+            if (communityParameters.Community.Type == JTokenType.Array)
+                communitys = communityParameters.Community.ToObject<Community[]>();
+            else
+                communitys = new[] { communityParameters.Community.ToObject<Community>() };
+
+            if(communitys != null)
+            {
+                foreach(var Community in communitys)
+                {
+                    if(!string.IsNullOrEmpty(Community.Script))
+                    {
+                        Script payeeAddress = new (Community.Script.HexToByteArray());
+                        var payeeReward = Community.Amount;
+
+                        tx.Outputs.Add(payeeReward, payeeAddress);
+                    /*  A block reward of 4 REALI/block is divided as follows:
+                    
+                            Miners (20%, 0.8 REALI)
+                            Masternodes (37%, 1.48 REALI)
+                            DataMining Fund (2%, 0.08 REALI)
+                            Developer Fund (8%, 0.32 REALI)
+                            Community Fund (33%, 1.32 REALI)
+                    */
+                        //reward -= payeeReward; // REALI does not deduct payeeReward from coinbasevalue (reward) since it's the amount which goes to miners
+
+                    }
+                }
+            }
+        }
+
+        return reward;
+    }
+
+    #endregion //Community
+ 
+    #region Developer
+
+    protected override Money CreateDeveloperOutputs(Transaction tx, Money reward)
+    {
+        if (developerParameters.Developer != null)
+        {
+            Developer[] developers;
+            if (developerParameters.Developer.Type == JTokenType.Array)
+                developers = developerParameters.Developer.ToObject<Developer[]>();
+            else
+                developers = new[] { developerParameters.Developer.ToObject<Developer>() };
+
+            if(developers != null)
+            {
+                foreach(var Developer in developers)
+                {
+                    if(!string.IsNullOrEmpty(Developer.Script))
+                    {
+                        Script payeeAddress = new (Developer.Script.HexToByteArray());
+                        var payeeReward = Developer.Amount;
+
+                        tx.Outputs.Add(payeeReward, payeeAddress);
+                    /*  A block reward of 4 REALI/block is divided as follows:
+                    
+                            Miners (20%, 0.8 REALI)
+                            Masternodes (37%, 1.48 REALI)
+                            DataMining Fund (2%, 0.08 REALI)
+                            Developer Fund (8%, 0.32 REALI)
+                            Community Fund (33%, 1.32 REALI)
+                    */
+                        //reward -= payeeReward; // REALI does not deduct payeeReward from coinbasevalue (reward) since it's the amount which goes to miners
+
+                    }
+                }
+            }
+        }
+
+        return reward;
+    }
+
+    #endregion //Developer
  }

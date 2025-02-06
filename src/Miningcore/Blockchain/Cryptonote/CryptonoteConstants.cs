@@ -62,6 +62,11 @@ public static class EquilibriaConstants
     public const decimal EquilibriaReserveRewardInitial = 0.75m;
 }
 
+public static class ScalaConstants
+{
+    public const int ScalaBlobType = 14;
+}
+
 public static class ZephyrConstants
 {
     public const int BlobType = 13;

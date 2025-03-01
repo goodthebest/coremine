@@ -207,7 +207,7 @@ public class BitcoinPayoutHandler : PayoutHandlerBase,
         object[] args;
 
         var identifier = !string.IsNullOrEmpty(clusterConfig.PaymentProcessing?.CoinbaseString) ?
-            clusterConfig.PaymentProcessing.CoinbaseString.Trim() : "KriptoKyng Pool";
+            clusterConfig.PaymentProcessing.CoinbaseString.Trim() : "Miningcore";
 
         var comment = $"{identifier} Payment";
 
@@ -217,7 +217,7 @@ public class BitcoinPayoutHandler : PayoutHandlerBase,
             {
                 var subtractFeesFrom = amounts.Keys.ToArray();
 
-                if(!poolConfig.Template.As<BitcoinTemplate>().HasMasterNodes || coin.Symbol == "KIIRO"))
+                if(!poolConfig.Template.As<BitcoinTemplate>().HasMasterNodes || coin.Symbol == "KIIRO")
                 {
                     args = new object[]
                     {

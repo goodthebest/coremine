@@ -79,9 +79,6 @@ public static unsafe class Multihash
     [DllImport("libmultihash", EntryPoint = "scryptn_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void scryptn(byte* input, void* output, uint nFactor, uint inputLength);
 
-    [DllImport("libmultihash", EntryPoint = "kezzak_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void kezzak(byte* input, void* output, uint inputLength);
-
     [DllImport("libmultihash", EntryPoint = "bcrypt_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void bcrypt(byte* input, void* output, uint inputLength);
 

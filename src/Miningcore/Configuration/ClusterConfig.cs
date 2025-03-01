@@ -566,10 +566,6 @@ public partial class CryptonoteCoinTemplate : CoinTemplate
     [JsonProperty(DefaultValueHandling = DefaultValueHandling.IgnoreAndPopulate)]
     [DefaultValue(1.0d)]
     public decimal BlockrewardMultiplier { get; set; }
-
-    [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
-    public int? CoinbaseMinConfimations { get; set; }
-
 }
 
 public enum EquihashSubfamily
@@ -1186,6 +1182,12 @@ public partial class PoolConfig
     public IDictionary<string, object> Extra { get; set; }
 }
 
+public partial class CoinMarketCapApi
+{
+    public bool Enabled { get; set; }
+    public string Key { get; set; }
+}
+
 public partial class ClusterConfig
 {
     /// <summary>
@@ -1236,4 +1238,6 @@ public partial class ClusterConfig
 
     [Required]
     public PoolConfig[] Pools { get; set; }
+
+    public CoinMarketCapApi CoinMarketCapApi { get; set; }
 }

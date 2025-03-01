@@ -82,16 +82,6 @@ public class HashingTests : TestBase
         Assert.Equal("e14c0b9b145f2df8ebf37c81a4982a87e174a8b46c7e5ca9326d10997e02e133", result);
     }
 
-    [Fact]
-    public void Kezzak_Hash()
-    {
-        var hasher = new Kezzak();
-        var hash = new byte[32];
-        hasher.Digest(testValue, hash, 0ul);
-        var result = hash.ToHexString();
-
-        Assert.Equal("00b11e72b948db16a181437150237fa247f9b5932758b7d3f648832ed88e7919", result);
-    }
 
     [Fact]
     public void Scrypt_Hash()

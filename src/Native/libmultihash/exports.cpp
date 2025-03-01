@@ -198,11 +198,6 @@ extern "C" MODULE_API void scryptn_export(const char* input, char* output, uint3
 	scrypt_N_R_1_256(input, output, N, 1, input_len); //hardcode for now to R=1 for now
 }
 
-extern "C" MODULE_API void kezzak_export(const char* input, char* output, uint32_t input_len)
-{
-	keccak_hash(input, output, input_len);
-}
-
 extern "C" MODULE_API void bcrypt_export(const char* input, char* output, uint32_t input_len)
 {
 	bcrypt_hash(input, output);

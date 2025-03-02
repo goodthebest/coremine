@@ -62,6 +62,10 @@
             ]
         }
     },
+    "coinMarketCapApi": {
+        "key": "Coin Market Cap API Key",       /* https://coinmarketcap.com/api/ */
+        "enabled": true
+        },
     "pools": [{
         "id": "nexa1",
         "enabled": true,

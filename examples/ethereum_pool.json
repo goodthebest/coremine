@@ -63,10 +63,6 @@
             ]
         }
     },
-    "coinMarketCapApi": {
-      "key": "Coin Market Cap API Key",       /* https://coinmarketcap.com/api/ */
-      "enabled": true
-      },
     "clusterName": "eu1",
     "pools": [
       {

@@ -21,7 +21,7 @@ using static Miningcore.Util.ActionUtils;
 
 namespace Miningcore.Blockchain.Bitcoin;
 
-[CoinFamily(CoinFamily.Bitcoin)]
+[CoinFamily(CoinFamily.Bitcoin, CoinFamily.Nexa)]
 public class BitcoinPayoutHandler : PayoutHandlerBase,
     IPayoutHandler
 {
@@ -50,7 +50,10 @@ public class BitcoinPayoutHandler : PayoutHandlerBase,
     protected BitcoinDaemonEndpointConfigExtra extraPoolEndpointConfig;
     protected BitcoinPoolPaymentProcessingConfigExtra extraPoolPaymentProcessingConfig;
 
-   
+    private int payoutDecimalPlaces = 4;
+    private CoinTemplate coin;
+    private int minConfirmations;
+
     protected override string LogCategory => "Bitcoin Payout Handler";
 
     #region IPayoutHandler
@@ -65,6 +68,15 @@ public class BitcoinPayoutHandler : PayoutHandlerBase,
         extraPoolConfig = pc.Extra.SafeExtensionDataAs<BitcoinPoolConfigExtra>();
         extraPoolEndpointConfig = pc.Extra.SafeExtensionDataAs<BitcoinDaemonEndpointConfigExtra>();
         extraPoolPaymentProcessingConfig = pc.PaymentProcessing.Extra.SafeExtensionDataAs<BitcoinPoolPaymentProcessingConfigExtra>();
+
+        coin = poolConfig.Template.As<CoinTemplate>();
+        if(coin is BitcoinTemplate bitcoinTemplate)
+        {
+            minConfirmations = extraPoolEndpointConfig?.MinimumConfirmations ?? bitcoinTemplate.CoinbaseMinConfimations ?? BitcoinConstants.CoinbaseMinConfimations;
+            payoutDecimalPlaces = bitcoinTemplate.PayoutDecimalPlaces ?? 4;
+        }
+        else
+            minConfirmations = extraPoolEndpointConfig?.MinimumConfirmations ?? BitcoinConstants.CoinbaseMinConfimations;
 
         logger = LogUtil.GetPoolScopedLogger(typeof(BitcoinPayoutHandler), pc);
 
@@ -82,12 +94,6 @@ public class BitcoinPayoutHandler : PayoutHandlerBase,
         var pageSize = 100;
         var pageCount = (int) Math.Ceiling(blocks.Length / (double) pageSize);
         var result = new List<Block>();
-        int minConfirmations;
-
-        if(coin is BitcoinTemplate bitcoinTemplate)
-            minConfirmations = extraPoolEndpointConfig?.MinimumConfirmations ?? bitcoinTemplate.CoinbaseMinConfimations ?? BitcoinConstants.CoinbaseMinConfimations;
-        else
-            minConfirmations = extraPoolEndpointConfig?.MinimumConfirmations ?? BitcoinConstants.CoinbaseMinConfimations;
 
         for(var i = 0; i < pageCount; i++)
         {

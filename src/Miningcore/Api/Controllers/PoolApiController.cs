@@ -155,7 +155,7 @@ public class PoolApiController : ApiControllerBase
         var lastBlockTime = await cf.Run(con => blocksRepo.GetLastPoolBlockTimeAsync(con, pool.Id));
         response.Pool.LastPoolBlockTime = lastBlockTime;
 
-        var payoutConfig = pool.PaymentProcessing;Add commentMore actions
+        var payoutConfig = pool.PaymentProcessing;
         response.Pool.PaymentProcessing.PayoutSchemeConfig = payoutConfig?.PayoutSchemeConfig.ToObject<ApiPoolPayoutSchemeConfig>();
         // display block finder percentage only if PPLNSBF is activated
         if(payoutConfig?.PayoutScheme != PayoutScheme.PPLNSBF)

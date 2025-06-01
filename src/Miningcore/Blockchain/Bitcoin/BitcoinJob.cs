@@ -753,13 +753,16 @@ public class BitcoinJob
 
     protected virtual Money CreateMinerFundOutputs(Transaction tx, Money reward)
     {
+        var payeeReward = minerFundParameters.MinimumValue;
+
         if (!string.IsNullOrEmpty(minerFundParameters.Addresses?.FirstOrDefault()))
         {
             var payeeAddress = BitcoinUtils.AddressToDestination(minerFundParameters.Addresses[0], network);
-            var payeeReward = minerFundParameters.MinimumValue;
             tx.Outputs.Add(payeeReward, payeeAddress);
-            reward -= payeeReward;
         }
+
+        reward -= payeeReward;
+
         return reward;
     }
 
@@ -772,13 +775,16 @@ public class BitcoinJob
 
     protected virtual Money CreateMinerDevFundOutputs(Transaction tx, Money reward)
     {
+        var payeeReward = minerDevFundParameters.MinimumValue;
+
         if (!string.IsNullOrEmpty(minerDevFundParameters.Addresses?.FirstOrDefault()))
         {
             var payeeAddress = BitcoinUtils.AddressToDestination(minerDevFundParameters.Addresses[0], network);
-            var payeeReward = minerDevFundParameters.MinimumValue;
             tx.Outputs.Add(payeeReward, payeeAddress);
-            reward -= payeeReward;
         }
+
+        reward -= payeeReward;
+
         return reward;
     }
 
@@ -909,7 +915,7 @@ public class BitcoinJob
         if(coin.HasMasterNodes)
         {
             masterNodeParameters = BlockTemplate.Extra.SafeExtensionDataAs<MasterNodeBlockTemplateExtra>();
-
+			
             if(coin.HasSmartNodes)
             {
                 if(masterNodeParameters.Extra?.ContainsKey("smartnode") == true)

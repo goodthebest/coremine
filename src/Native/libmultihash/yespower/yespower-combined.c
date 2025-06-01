@@ -1324,3 +1324,16 @@ void yespowerADVC_hash(const char* input, char* output, uint32_t len)
     };
     yespower_tls(input, len, &yespower_1_0_ADVC, (yespower_binary_t *)output);
 }
+
+void yespowerEQPAY_hash(const char* input, char* output, uint32_t len)
+{
+    yespower_params_t yespower_1_0_EQPAY = {
+        .version = YESPOWER_1_0,
+        .N = 2048,
+        .r = 32,
+        .pers = (const uint8_t *)"The gods had gone away, and the ritual of the religion continued senselessly, uselessly.",
+        .perslen = 88
+    };
+    yespower_tls(input, len, &yespower_1_0_EQPAY, (yespower_binary_t *)output);
+}
+

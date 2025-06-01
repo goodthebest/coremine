@@ -71,6 +71,12 @@ public class PoolApiController : ApiControllerBase
                 var lastBlockTime = await cf.Run(con => blocksRepo.GetLastPoolBlockTimeAsync(con, config.Id));
                 result.LastPoolBlockTime = lastBlockTime;
 
+                var payoutConfig = config.PaymentProcessing;
+                result.PaymentProcessing.PayoutSchemeConfig = payoutConfig?.PayoutSchemeConfig.ToObject<ApiPoolPayoutSchemeConfig>();
+                // display block finder percentage only if PPLNSBF is activated
+                if(payoutConfig?.PayoutScheme != PayoutScheme.PPLNSBF)
+                    result.PaymentProcessing.PayoutSchemeConfig.BlockFinderPercentage = null;
+
                 if(lastBlockTime.HasValue)
                 {
                     var startTime = lastBlockTime.Value;
@@ -148,6 +154,12 @@ public class PoolApiController : ApiControllerBase
         response.Pool.TotalBlocks = await cf.Run(con => blocksRepo.GetPoolBlockCountAsync(con, pool.Id, ct));
         var lastBlockTime = await cf.Run(con => blocksRepo.GetLastPoolBlockTimeAsync(con, pool.Id));
         response.Pool.LastPoolBlockTime = lastBlockTime;
+
+        var payoutConfig = pool.PaymentProcessing;Add commentMore actions
+        response.Pool.PaymentProcessing.PayoutSchemeConfig = payoutConfig?.PayoutSchemeConfig.ToObject<ApiPoolPayoutSchemeConfig>();
+        // display block finder percentage only if PPLNSBF is activated
+        if(payoutConfig?.PayoutScheme != PayoutScheme.PPLNSBF)
+            response.Pool.PaymentProcessing.PayoutSchemeConfig.BlockFinderPercentage = null;
 
         if(lastBlockTime.HasValue)
         {
@@ -291,7 +303,7 @@ public class PoolApiController : ApiControllerBase
         var blockStates = state is { Length: > 0 } ?
             state :
             new[] { BlockStatus.Confirmed, BlockStatus.Pending, BlockStatus.Orphaned };
-            
+
         uint itemCount = await cf.Run(con => blocksRepo.GetPoolBlockCountAsync(con, poolId, ct));
         uint pageCount = (uint) Math.Floor(itemCount / (double) pageSize);
 
@@ -499,7 +511,7 @@ public class PoolApiController : ApiControllerBase
     {
         var pool = GetPool(poolId);
         var ct = HttpContext.RequestAborted;
-        
+
         if(string.IsNullOrEmpty(address))
             throw new ApiException("Invalid or missing miner address", HttpStatusCode.NotFound);
 
@@ -509,7 +521,7 @@ public class PoolApiController : ApiControllerBase
         var blockStates = state is { Length: > 0 } ?
             state :
             new[] { BlockStatus.Confirmed, BlockStatus.Pending, BlockStatus.Orphaned };
-        
+
         uint itemCount = await cf.Run(con => blocksRepo.GetMinerBlockCountAsync(con, poolId, address, ct));
         uint pageCount = (uint) Math.Floor(itemCount / (double) pageSize);
 
@@ -589,7 +601,7 @@ public class PoolApiController : ApiControllerBase
 
         if(pool.Template.Family == CoinFamily.Ethereum)
             address = address.ToLower();
-        
+
         uint itemCount = await cf.Run(con => paymentsRepo.GetPaymentsCountAsync(con, poolId, address, ct));
         uint pageCount = (uint) Math.Floor(itemCount / (double) pageSize);
 
@@ -650,7 +662,7 @@ public class PoolApiController : ApiControllerBase
 
         if(pool.Template.Family == CoinFamily.Ethereum)
             address = address.ToLower();
-        
+
         uint itemCount = await cf.Run(con => paymentsRepo.GetBalanceChangesCountAsync(con, poolId, address));
         uint pageCount = (uint) Math.Floor(itemCount / (double) pageSize);
 

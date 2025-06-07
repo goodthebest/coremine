@@ -6712,6 +6712,38 @@
         "explorerTxLink": "https://explorer.adventurecoin.quest/#/transaction/{0}",
         "explorerAccountLink": "https://explorer.adventurecoin.quest/#/address/{0}"
     },
+    "evoai": {
+        "name": "EvoAI",
+        "canonicalName": "EvoAI",
+        "symbol": "EVO",
+        "family": "bitcoin",
+        "website": "https://evoai.top/",
+        "github": "https://github.com/evoai-team/evo",
+        "explorer": "https://explorer.evoai.top/",
+        "twitter": "",
+        "telegram": "https://t.me/+oLGorom06EllYzk1",
+        "discord": "https://discord.gg/9ucxz92SXN",
+        "coinbaseHasher": {
+            "hash": "sha256d"
+        },
+        "headerHasher": {
+            "hash": "evohash"
+        },
+        "blockHasher": {
+            "hash": "reverse",
+            "args": [
+                {
+                    "hash": "evohash"
+                }
+            ]
+        },
+        "coinbaseTxVersion": 8,
+        "coinbaseMinConfimations": 51,
+        "shareMultiplier": 256,
+        "explorerBlockLink": "https://explorer.evoai.top/block/$hash$",
+        "explorerTxLink": "https://explorer.evoai.top/tx/{0}",
+        "explorerAccountLink": "https://explorer.evoai.top/address/{0}"
+    },
     "lightningcashr": {
         "name": "LightningCash-R",
         "canonicalName": "LightningCash-R",

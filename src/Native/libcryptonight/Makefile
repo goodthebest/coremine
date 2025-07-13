@@ -63,11 +63,10 @@ OBJECTS = exports.o \
 	xmrig/crypto/ghostrider/sph_skein.o \
 	xmrig/crypto/ghostrider/sph_whirlpool.o \
 	xmrig-override/crypto/ghostrider/ghostrider.o \
-	xmrig-override/crypto/mike/mike.o \
+        xmrig-override/crypto/mike/mike.o \
 	\
-	xmrig/3rdparty/libethash/keccakf800.o \
-	\
-	xmrig-override/crypto/flex/flex.o \
+	xmrig/3rdparty/libethash/keccakf800.o
+
 
 all: $(TARGET)
 

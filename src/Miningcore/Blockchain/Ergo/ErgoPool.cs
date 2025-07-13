@@ -66,7 +66,18 @@ public class ErgoPool : PoolBase
         .Concat(manager.GetSubscriberData(connection))
         .ToArray();
 
-        await connection.RespondAsync(data, request.Id);
+        // Nicehash's stupid validator insists on "error" property present
+        // in successful responses which is a violation of the JSON-RPC spec
+        // [We miss you Oliver <3 We miss you so much <3 Respect the goddamn standards Nicehash :(]
+        var response = new JsonRpcResponse<object[]>(data, request.Id);
+
+        if(context.IsNicehash || poolConfig.EnableAsicBoost == true)
+        {
+            response.Extra = new Dictionary<string, object>();
+            response.Extra["error"] = null;
+        }
+
+        await connection.RespondAsync(response);
 
         // setup worker context
         context.IsSubscribed = true;
@@ -98,15 +109,25 @@ public class ErgoPool : PoolBase
 
         if(context.IsAuthorized)
         {
+            // Nicehash's stupid validator insists on "error" property present
+            // in successful responses which is a violation of the JSON-RPC spec
+            // [We miss you Oliver <3 We miss you so much <3 Respect the goddamn standards Nicehash :(]
+            var response = new JsonRpcResponse<object>(context.IsAuthorized, request.Id);
+
+            if(context.IsNicehash || poolConfig.EnableAsicBoost == true)
+            {
+                response.Extra = new Dictionary<string, object>();
+                response.Extra["error"] = null;
+            }
+
             // respond
-            await connection.RespondAsync(context.IsAuthorized, request.Id);
+            await connection.RespondAsync(response);
 
             // log association
             logger.Info(() => $"[{connection.ConnectionId}] Authorized worker {workerValue}");
 
             // extract control vars from password
             var staticDiff = GetStaticDiffFromPassparts(passParts);
-            var startDiff = GetStartDiffFromPassparts(passParts);
 
             // Nicehash support
             var nicehashDiff = await GetNicehashStaticMinDiff(context, coin.Name, coin.GetAlgorithmName());
@@ -125,27 +146,20 @@ public class ErgoPool : PoolBase
             }
 
             // Static diff
-            if(staticDiff.HasValue && !startDiff.HasValue && (context.VarDiff != null && staticDiff.Value >= context.VarDiff.Config.MinDiff || context.VarDiff == null && staticDiff.Value > context.Difficulty))
+            if(staticDiff.HasValue &&
+               (context.VarDiff != null && staticDiff.Value >= context.VarDiff.Config.MinDiff ||
+                   context.VarDiff == null && staticDiff.Value > context.Difficulty))
             {
                 context.VarDiff = null; // disable vardiff
                 context.SetDifficulty(staticDiff.Value);
 
                 logger.Info(() => $"[{connection.ConnectionId}] Setting static difficulty of {staticDiff.Value}");
-
-                await connection.NotifyAsync(BitcoinStratumMethods.SetDifficulty, new object[] { context.Difficulty });
             }
 
-            // Start diff
-            if(startDiff.HasValue && (context.VarDiff != null && startDiff.Value >= context.VarDiff.Config.MinDiff || context.VarDiff == null && startDiff.Value > context.Difficulty))
-            {
-                context.SetDifficulty(startDiff.Value);
-                logger.Info(() => $"[{connection.ConnectionId}] Start difficulty set to {startDiff.Value}");
-
-                await connection.NotifyAsync(BitcoinStratumMethods.SetDifficulty, new object[] { context.Difficulty });
-            }
+            var minerJobParams = CreateWorkerJob(connection, context.IsAuthorized);
 
             // send intial update
-            await SendJob(connection, context, currentJobParams);
+            await SendJob(connection, context, minerJobParams);
         }
 
         else
@@ -162,6 +176,21 @@ public class ErgoPool : PoolBase
                 Disconnect(connection);
             }
         }
+    }
+
+    private object[] CreateWorkerJob(StratumConnection connection, bool cleanJob)
+    {
+        var context = connection.ContextAs<ErgoWorkerContext>();
+        var maxActiveJobs = extraPoolConfig?.MaxActiveJobs ?? 4;
+        var job = manager.GetJobForStratum();
+
+        // update context
+        lock(context)
+        {
+            context.AddJob(job, maxActiveJobs);
+        }
+
+        return job.GetJobParams(cleanJob);
     }
 
     protected virtual async Task OnSubmitAsync(StratumConnection connection, Timestamped<JsonRpcRequest> tsRequest, CancellationToken ct)
@@ -196,7 +225,19 @@ public class ErgoPool : PoolBase
 
             // submit
             var share = await manager.SubmitShareAsync(connection, requestParams, ct);
-            await connection.RespondAsync(true, request.Id);
+
+            // Nicehash's stupid validator insists on "error" property present
+            // in successful responses which is a violation of the JSON-RPC spec
+            // [We miss you Oliver <3 We miss you so much <3 Respect the goddamn standards Nicehash :(]
+            var response = new JsonRpcResponse<object>(true, request.Id);
+
+            if(context.IsNicehash || poolConfig.EnableAsicBoost == true)
+            {
+                response.Extra = new Dictionary<string, object>();
+                response.Extra["error"] = null;
+            }
+
+            await connection.RespondAsync(response);
 
             // publish
             messageBus.SendMessage(share);
@@ -241,8 +282,9 @@ public class ErgoPool : PoolBase
         await Guard(() => ForEachMinerAsync(async (connection, ct) =>
         {
             var context = connection.ContextAs<ErgoWorkerContext>();
+            var minerJobParams = CreateWorkerJob(connection, (bool) jobParams[^1]);
 
-            await SendJob(connection, context, currentJobParams);
+            await SendJob(connection, context, minerJobParams);
         }));
     }
 
@@ -390,7 +432,9 @@ public class ErgoPool : PoolBase
 
         if(context.ApplyPendingDifficulty())
         {
-            await SendJob(connection, context, currentJobParams);
+            var minerJobParams = CreateWorkerJob(connection, (bool) currentJobParams[^1]);
+
+            await SendJob(connection, context, minerJobParams);
         }
     }
 

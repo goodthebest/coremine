@@ -36,9 +36,6 @@ public class CryptonoteJob
     {
         { CryptonightHashType.RandomX, (realm, seedHex, data, result, _) => RandomX.CalculateHash(realm, seedHex, data, result) },
         { CryptonightHashType.RandomARQ, (realm, seedHex, data, result, _) => RandomARQ.CalculateHash(realm, seedHex, data, result) },
-        { CryptonightHashType.RandomSCASH, (realm, seedHex, data, result, _) => RandomSCASH.CalculateHash(realm, seedHex, data, result) },
-        { CryptonightHashType.RandomXEQ, (realm, seedHex, data, result, _) => RandomXEQ.CalculateHash(realm, seedHex, data, result) },
-        { CryptonightHashType.Panthera, (realm, seedHex, data, result, _) => Panthera.CalculateHash(realm, seedHex, data, result) },
         { CryptonightHashType.Cryptonight0, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, CN_0, height) },
         { CryptonightHashType.Cryptonight1, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, CN_1, height) },
         { CryptonightHashType.Cryptonight2, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, CN_2, height) },
@@ -52,9 +49,8 @@ public class CryptonoteJob
         { CryptonightHashType.CryptonightGPU, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, CN_GPU, height) },
         { CryptonightHashType.CryptonightFast, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, CN_FAST, height) },
         { CryptonightHashType.CryptonightXAO, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, CN_XAO, height) },
-        { CryptonightHashType.Flex, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, FLEX_KCN, height) },
         { CryptonightHashType.Ghostrider, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, GHOSTRIDER_RTM, height) },
-		{ CryptonightHashType.Mike, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, GHOSTRIDER_MIKE, height) },
+        { CryptonightHashType.Mike, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, GHOSTRIDER_MIKE, height) },
         { CryptonightHashType.CryptonightLite0, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, CN_LITE_0, height) },
         { CryptonightHashType.CryptonightLite1, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, CN_LITE_1, height) },
         { CryptonightHashType.CryptonightHeavy, (_, _, data, result, height) => Cryptonight.CryptonightHash(data, result, CN_HEAVY_0, height) },
@@ -102,6 +98,8 @@ public class CryptonoteJob
 
         if(padLength > 0)
             bytes.CopyTo(padded.Slice(padLength, bytes.Length));
+        else
+            bytes.Slice(bytes.Length - padded.Length, padded.Length).CopyTo(padded);
 
         padded = padded[..size];
         padded.Reverse();
@@ -213,9 +211,8 @@ public class CryptonoteJob
             Span<byte> blockHash = stackalloc byte[32];
             
             // Not all Cryptonote coins are equal
-            if(blobType == ZephyrConstants.BlobType || blobType == EquilibriaConstants.EquilibriaBlobType || blobType == ScalaConstants.ScalaBlobType)
+            if(blobType == ZephyrConstants.BlobType)
                 CryptonoteBindings.GetBlockId(blob, blockHash, blobType);
-
             else
                 ComputeBlockHash(blobConverted, blockHash);
 

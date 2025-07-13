@@ -14,6 +14,9 @@ using Miningcore.Blockchain.Handshake;
 using Miningcore.Blockchain.Kaspa;
 using Miningcore.Blockchain.Nexa;
 using Miningcore.Blockchain.Progpow;
+using Miningcore.Blockchain.Warthog;
+using Miningcore.Blockchain.Xelis;
+using Miningcore.Blockchain.Zano;
 using Miningcore.Configuration;
 using Miningcore.Crypto;
 using Miningcore.Crypto.Hashing.Equihash;
@@ -32,6 +35,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IO;
 using Miningcore.Nicehash;
 using Miningcore.Pushover;
+using Miningcore.CoinMarketCap;
 
 namespace Miningcore;
 
@@ -120,6 +124,9 @@ public class AutofacModule : Module
             .SingleInstance();
 
         builder.RegisterType<NicehashService>()
+            .SingleInstance();
+
+        builder.RegisterType<CoinMarketCapService>()
             .SingleInstance();
 
         builder.RegisterType<PushoverClient>()
@@ -213,6 +220,7 @@ public class AutofacModule : Module
 
         //////////////////////
         // Handshake
+
         builder.RegisterType<HandshakeJobManager>();
         
         //////////////////////
@@ -222,12 +230,28 @@ public class AutofacModule : Module
 
         //////////////////////
         // Nexa
+
         builder.RegisterType<NexaJobManager>();
         
         //////////////////////
         // Progpow
 
         builder.RegisterType<ProgpowJobManager>();
+
+        //////////////////////
+        // Warthog
+
+        builder.RegisterType<WarthogJobManager>();
+
+        //////////////////////
+        // Xelis
+
+        builder.RegisterType<XelisJobManager>();
+
+        //////////////////////
+        // Zano
+
+        builder.RegisterType<ZanoJobManager>();
 
         base.Load(builder);
     }

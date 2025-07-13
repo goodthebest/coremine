@@ -50,61 +50,86 @@ public class PoolApiController : ApiControllerBase
     #region Actions
 
     [HttpGet]
-    public async Task<GetPoolsResponse> Get(CancellationToken ct, [FromQuery] uint topMinersRange = 24)
+    public async Task<IActionResult> Get(CancellationToken ct,
+        [FromServices] CoinMarketCap.CoinMarketCapService service,
+        [FromQuery] uint topMinersRange = 24)
     {
-        var response = new GetPoolsResponse
+        try
         {
-            Pools = await Task.WhenAll(clusterConfig.Pools.Where(x => x.Enabled).Select(async config =>
+            var response = new GetPoolsResponse
             {
-                // load stats
-                var stats = await cf.Run(con => statsRepo.GetLastPoolStatsAsync(con, config.Id, ct));
-
-                // get pool
-                pools.TryGetValue(config.Id, out var pool);
-
-                // map
-                var result = config.ToPoolInfo(mapper, stats, pool);
-
-                // enrich
-                result.TotalPaid = await cf.Run(con => statsRepo.GetTotalPoolPaymentsAsync(con, config.Id, ct));
-                result.TotalBlocks = await cf.Run(con => blocksRepo.GetPoolBlockCountAsync(con, config.Id, ct));
-                var lastBlockTime = await cf.Run(con => blocksRepo.GetLastPoolBlockTimeAsync(con, config.Id));
-                result.LastPoolBlockTime = lastBlockTime;
-
-                var payoutConfig = config.PaymentProcessing;
-                result.PaymentProcessing.PayoutSchemeConfig = payoutConfig?.PayoutSchemeConfig.ToObject<ApiPoolPayoutSchemeConfig>();
-                // display block finder percentage only if PPLNSBF is activated
-                if(payoutConfig?.PayoutScheme != PayoutScheme.PPLNSBF)
-                    result.PaymentProcessing.PayoutSchemeConfig.BlockFinderPercentage = null;
-
-                if(lastBlockTime.HasValue)
+                Pools = await Task.WhenAll(clusterConfig.Pools.Where(x => x.Enabled).Select(async config =>
                 {
-                    var startTime = lastBlockTime.Value;
-                    var poolEffort = await cf.Run(con => shareRepo.GetEffortBetweenCreatedAsync(con, config.Id, startTime, clock.Now));
+                    // load stats
+                    var stats = await cf.Run(con => statsRepo.GetLastPoolStatsAsync(con, config.Id, ct));
 
-                    //kaspa effort fix start here
-                    // If the effort is less than 1e-8, multiply it by 4e9
-                    if(poolEffort.HasValue && poolEffort.Value < 1e-8)
+                    // get pool
+                    pools.TryGetValue(config.Id, out var pool);
+
+                    // map
+                    var result = config.ToPoolInfo(mapper, stats, pool);
+
+                    // enrich
+                    result.TotalPaid = await cf.Run(con => statsRepo.GetTotalPoolPaymentsAsync(con, config.Id, ct));
+                    result.TotalBlocks = await cf.Run(con => blocksRepo.GetPoolBlockCountAsync(con, config.Id, ct));
+                    result.TotalConfirmedBlocks = await cf.Run(con => blocksRepo.GetTotalConfirmedBlocksAsync(con, config.Id, ct));
+                    result.TotalPendingBlocks = await cf.Run(con => blocksRepo.GetTotalPendingBlocksAsync(con, config.Id, ct));
+                    // get reward of the last confirmed block and set BlockReward
+                    result.BlockReward = await cf.Run(con => blocksRepo.GetLastConfirmedBlockRewardAsync(con, config.Id, ct));
+                    var lastBlockTime = await cf.Run(con => blocksRepo.GetLastPoolBlockTimeAsync(con, config.Id, ct));
+                    result.LastPoolBlockTime = lastBlockTime;
+
+                    if(lastBlockTime.HasValue)
                     {
-                        poolEffort *= 4e9;
+                        var startTime = lastBlockTime.Value;
+                        var poolEffort = await cf.Run(con => shareRepo.GetEffortBetweenCreatedAsync(con, config.Id, pool.ShareMultiplier, startTime, clock.Now, ct));
+                        if(poolEffort.HasValue)
+                            result.PoolEffort = poolEffort.Value;
                     }
-                    //kaspa effort fix end here
 
-                    if(poolEffort.HasValue)
-                        result.PoolEffort = poolEffort.Value;
+                    var from = clock.Now.AddHours(-topMinersRange);
+
+                    var minersByHashrate = await cf.Run(con => statsRepo.PagePoolMinersByHashrateAsync(con, config.Id, from, 0, 15, ct));
+
+                    result.TopMiners = minersByHashrate.Select(mapper.Map<MinerPerformanceStats>).ToArray();
+
+                    return result;
+                }).ToArray())
+            };
+
+            if(clusterConfig.CoinMarketCapApi.Enabled)
+            {
+                var symbols = string.Join(",", response?.Pools?.Select(Q => Q.Coin.Symbol));
+                if(!string.IsNullOrWhiteSpace(symbols))
+                {
+                    var result = await service.GetCryptoQuoteAsync(symbols);
+                    foreach(var item in response.Pools)
+                    {
+                        if(result.Data.TryGetValue(item.Coin.Symbol, out var marketCapData))
+                        {
+                            var marketData = marketCapData.Where(Q => string.Equals(item.Coin.Symbol, Q.Symbol, StringComparison.OrdinalIgnoreCase)).FirstOrDefault();
+                            if(marketData?.Quote != null && marketData.Quote.TryGetValue("USD", out var quote) && quote?.Price != null && quote.Price.HasValue)
+                            {
+                                item.Coin.Price = Math.Round(quote.Price.Value, 4);
+                                item.Coin.Logo = marketData.Logo;
+                                item.Coin.VolumeChange24H = quote.VolumeChange24H.HasValue ? Math.Round(quote.VolumeChange24H.Value, 4) : "n/a";
+                            }
+                            else
+                            {
+                                item.Coin.Price = "n/a";
+                                item.Coin.Logo = "n/a";
+                                item.Coin.VolumeChange24H = "n/a";
+                            }
+                        }
+                    }
                 }
-
-                var from = clock.Now.AddHours(-topMinersRange);
-
-                var minersByHashrate = await cf.Run(con => statsRepo.PagePoolMinersByHashrateAsync(con, config.Id, from, 0, 15, ct));
-
-                result.TopMiners = minersByHashrate.Select(mapper.Map<MinerPerformanceStats>).ToArray();
-
-                return result;
-            }).ToArray())
-        };
-
-        return response;
+            }
+            return Ok(response);
+        }
+        catch(Exception ex)
+        {
+            return Problem(detail: ex.Message, statusCode: 500, title: "Internal Server Error");
+        }
     }
 
     [HttpGet("/api/help")]
@@ -152,28 +177,17 @@ public class PoolApiController : ApiControllerBase
         // enrich
         response.Pool.TotalPaid = await cf.Run(con => statsRepo.GetTotalPoolPaymentsAsync(con, pool.Id, ct));
         response.Pool.TotalBlocks = await cf.Run(con => blocksRepo.GetPoolBlockCountAsync(con, pool.Id, ct));
-        var lastBlockTime = await cf.Run(con => blocksRepo.GetLastPoolBlockTimeAsync(con, pool.Id));
+        response.Pool.TotalConfirmedBlocks = await cf.Run(con => blocksRepo.GetTotalConfirmedBlocksAsync(con, pool.Id, ct));
+        response.Pool.TotalPendingBlocks = await cf.Run(con => blocksRepo.GetTotalPendingBlocksAsync(con, pool.Id, ct));
+        // get reward of the last confirmed block and set BlockReward
+        response.Pool.BlockReward = await cf.Run(con => blocksRepo.GetLastConfirmedBlockRewardAsync(con, pool.Id, ct));
+        var lastBlockTime = await cf.Run(con => blocksRepo.GetLastPoolBlockTimeAsync(con, pool.Id, ct));
         response.Pool.LastPoolBlockTime = lastBlockTime;
-
-        var payoutConfig = pool.PaymentProcessing;
-        response.Pool.PaymentProcessing.PayoutSchemeConfig = payoutConfig?.PayoutSchemeConfig.ToObject<ApiPoolPayoutSchemeConfig>();
-        // display block finder percentage only if PPLNSBF is activated
-        if(payoutConfig?.PayoutScheme != PayoutScheme.PPLNSBF)
-            response.Pool.PaymentProcessing.PayoutSchemeConfig.BlockFinderPercentage = null;
 
         if(lastBlockTime.HasValue)
         {
             var startTime = lastBlockTime.Value;
-            var poolEffort = await cf.Run(con => shareRepo.GetEffortBetweenCreatedAsync(con, pool.Id, startTime, clock.Now));
-
-            //kaspa effort fix start here
-            // If the effort is less than 1e-8, multiply it by 4e9
-            if(poolEffort.HasValue && poolEffort.Value < 1e-8)
-            {
-                  poolEffort *= 4e9;
-            }
-            //kaspa effort fix end here
-
+            var poolEffort = await cf.Run(con => shareRepo.GetEffortBetweenCreatedAsync(con, pool.Id, poolInstance.ShareMultiplier, startTime, clock.Now, ct));
             if(poolEffort.HasValue)
                 response.Pool.PoolEffort = poolEffort.Value;
         }
@@ -274,20 +288,6 @@ public class PoolApiController : ApiControllerBase
                         block.InfoLink = blockInfobaseUrl.Replace(CoinMetaData.BlockHashPH, block.Hash);
                 }
             }
-
-            //kaspa effort fix start here
-            // If the effort is less than 1e-8, multiply it by 4e9
-            if(block.Effort < 1e-8)
-            {
-                block.Effort *= 4e9;
-            }
-
-            // If the minerEffort is less than 1e-8, multiply it by 4e9
-            if(block.MinerEffort < 1e-8)
-            {
-                block.MinerEffort *= 4e9;
-            }
-            //kaspa effort fix end here
         }
 
         return blocks;
@@ -303,7 +303,7 @@ public class PoolApiController : ApiControllerBase
         var blockStates = state is { Length: > 0 } ?
             state :
             new[] { BlockStatus.Confirmed, BlockStatus.Pending, BlockStatus.Orphaned };
-
+            
         uint itemCount = await cf.Run(con => blocksRepo.GetPoolBlockCountAsync(con, poolId, ct));
         uint pageCount = (uint) Math.Floor(itemCount / (double) pageSize);
 
@@ -437,25 +437,22 @@ public class PoolApiController : ApiControllerBase
                     stats.LastPaymentLink = string.Format(baseUrl, statsResult.LastPayment.TransactionConfirmationData);
             }
 
- 	    var lastBlockTime = await cf.Run(con => blocksRepo.GetLastMinerBlockTimeAsync(con, pool.Id, address));
+            var lastBlockTime = await cf.Run(con => blocksRepo.GetLastPoolBlockTimeAsync(con, pool.Id, ct));
             if(lastBlockTime.HasValue)
-           {
-            	var startTime = lastBlockTime.Value;
-            	var minerEffort = await cf.Run(con => shareRepo.GetMinerEffortBetweenCreatedAsync(con, pool.Id, address, startTime, clock.Now));
-
-                //kaspa effort fix start here
-                // If the effort is less than 1e-8, multiply it by 4e9
-                if(minerEffort.HasValue && minerEffort.Value < 1e-8)
-                {
-                    minerEffort *= 4e9;
-                }
-                //kaspa effort fix end here
-
-            	if(minerEffort.HasValue)
-                	stats.MinerEffort = minerEffort.Value;
-           }
+            {
+                var startTime = lastBlockTime.Value;
+                var minerEffort = await cf.Run(con => shareRepo.GetMinerEffortBetweenCreatedAsync(con, pool.Id, address, startTime, clock.Now, ct));
+                if(minerEffort.HasValue)
+                    stats.MinerEffort = minerEffort.Value;
+            }
 
             stats.PerformanceSamples = await GetMinerPerformanceInternal(perfMode, pool, address, ct);
+
+            // add total confirmed and pending blocks
+            var totalConfirmedBlocks = await cf.Run(con => statsRepo.GetMinerTotalConfirmedBlocksAsync(con, pool.Id, address, ct));
+            var totalPendingBlocks = await cf.Run(con => statsRepo.GetMinerTotalPendingBlocksAsync(con, pool.Id, address, ct));
+            stats.TotalConfirmedBlocks = totalConfirmedBlocks;
+            stats.TotalPendingBlocks = totalPendingBlocks;
         }
 
         return stats;
@@ -511,7 +508,7 @@ public class PoolApiController : ApiControllerBase
     {
         var pool = GetPool(poolId);
         var ct = HttpContext.RequestAborted;
-
+        
         if(string.IsNullOrEmpty(address))
             throw new ApiException("Invalid or missing miner address", HttpStatusCode.NotFound);
 
@@ -521,7 +518,7 @@ public class PoolApiController : ApiControllerBase
         var blockStates = state is { Length: > 0 } ?
             state :
             new[] { BlockStatus.Confirmed, BlockStatus.Pending, BlockStatus.Orphaned };
-
+        
         uint itemCount = await cf.Run(con => blocksRepo.GetMinerBlockCountAsync(con, poolId, address, ct));
         uint pageCount = (uint) Math.Floor(itemCount / (double) pageSize);
 
@@ -601,7 +598,7 @@ public class PoolApiController : ApiControllerBase
 
         if(pool.Template.Family == CoinFamily.Ethereum)
             address = address.ToLower();
-
+        
         uint itemCount = await cf.Run(con => paymentsRepo.GetPaymentsCountAsync(con, poolId, address, ct));
         uint pageCount = (uint) Math.Floor(itemCount / (double) pageSize);
 
@@ -662,7 +659,7 @@ public class PoolApiController : ApiControllerBase
 
         if(pool.Template.Family == CoinFamily.Ethereum)
             address = address.ToLower();
-
+        
         uint itemCount = await cf.Run(con => paymentsRepo.GetBalanceChangesCountAsync(con, poolId, address));
         uint pageCount = (uint) Math.Floor(itemCount / (double) pageSize);
 

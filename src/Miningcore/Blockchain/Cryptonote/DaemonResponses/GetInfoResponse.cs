@@ -89,10 +89,4 @@ public class GetInfoResponse
     /// </summary>
     [JsonProperty("outgoing_connections_count")]
     public int OutgoingConnectionsCount { get; set; }
-
-    /// <summary>
-    /// Version
-    /// </summary>
-    [JsonProperty("version")]
-    public string Version { get; set; }
 }

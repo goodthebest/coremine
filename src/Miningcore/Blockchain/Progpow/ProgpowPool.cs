@@ -47,8 +47,6 @@ public class ProgpowPool : PoolBase
         switch(coin.Symbol)
         {
             case "FIRO":
-            case "KIIRO":
-            case "REALI":
                 return ProgpowUtils.FiroEncodeTarget(difficulty);
             
             default:
@@ -77,7 +75,18 @@ public class ProgpowPool : PoolBase
         .Concat(manager.GetSubscriberData(connection))
         .ToArray();
 
-        await connection.RespondAsync(data, request.Id);
+        // Nicehash's stupid validator insists on "error" property present
+        // in successful responses which is a violation of the JSON-RPC spec
+        // [Respect the goddamn standards Nicehack :(]
+        var response = new JsonRpcResponse<object[]>(data, request.Id);
+
+        if(context.IsNicehash || poolConfig.EnableAsicBoost == true)
+        {
+            response.Extra = new Dictionary<string, object>();
+            response.Extra["error"] = null;
+        }
+
+        await connection.RespondAsync(response);
 
         // setup worker context
         context.IsSubscribed = true;
@@ -125,48 +134,38 @@ public class ProgpowPool : PoolBase
 
         if(context.IsAuthorized)
         {
+            // Nicehash's stupid validator insists on "error" property present
+            // in successful responses which is a violation of the JSON-RPC spec
+            // [Respect the goddamn standards Nicehack :(]
+            var response = new JsonRpcResponse<object>(context.IsAuthorized, request.Id);
+
+            if(context.IsNicehash || poolConfig.EnableAsicBoost == true)
+            {
+                response.Extra = new Dictionary<string, object>();
+                response.Extra["error"] = null;
+            }
+
             // respond
-            await connection.RespondAsync(context.IsAuthorized, request.Id);
+            await connection.RespondAsync(response);
 
             // log association
             logger.Info(() => $"[{connection.ConnectionId}] Authorized worker {workerValue}");
 
             // extract control vars from password
             var staticDiff = GetStaticDiffFromPassparts(passParts);
-            var startDiff = GetStartDiffFromPassparts(passParts);
 
-			// Start diff
-			if(startDiff.HasValue)
-			{
-				if(context.VarDiff != null && startDiff.Value >= context.VarDiff.Config.MinDiff || context.VarDiff == null && startDiff.Value > context.Difficulty)
-				{
-					context.SetDifficulty(startDiff.Value);
-					logger.Info(() => $"[{connection.ConnectionId}] Start difficulty set to {startDiff.Value}");
-				}
-				else
-				{
-					context.SetDifficulty(context.VarDiff.Config.MinDiff);
-					logger.Info(() => $"[{connection.ConnectionId}] Start difficulty set to {context.VarDiff.Config.MinDiff}");
-				}
-			}
-			
-			// Static diff
-			if(staticDiff.HasValue && !startDiff.HasValue)
-			{
-				if(context.VarDiff != null && staticDiff.Value >= context.VarDiff.Config.MinDiff || context.VarDiff == null && staticDiff.Value > context.Difficulty)
-				{
-					context.VarDiff = null; // disable vardiff
-					context.SetDifficulty(staticDiff.Value);
-					logger.Info(() => $"[{connection.ConnectionId}] Setting static difficulty of {staticDiff.Value}");
-				}
-				else
-				{
-					context.VarDiff = null; // disable vardiff
-					context.SetDifficulty(context.VarDiff.Config.MinDiff);
-					logger.Info(() => $"[{connection.ConnectionId}] Setting static difficulty of {context.VarDiff.Config.MinDiff}");
-				}
-			}
-			await connection.NotifyAsync(BitcoinStratumMethods.SetDifficulty, new object[] { context.Difficulty });
+            // Static diff
+            if(staticDiff.HasValue &&
+               (context.VarDiff != null && staticDiff.Value >= context.VarDiff.Config.MinDiff ||
+                   context.VarDiff == null && staticDiff.Value > context.Difficulty))
+            {
+                context.VarDiff = null; // disable vardiff
+                context.SetDifficulty(staticDiff.Value);
+
+                logger.Info(() => $"[{connection.ConnectionId}] Setting static difficulty of {staticDiff.Value}");
+
+                await connection.NotifyAsync(ProgpowStratumMethods.SetDifficulty, new object[] { createEncodeTarget(context.Difficulty) });
+            }
         }
 
         else
@@ -206,7 +205,7 @@ public class ProgpowPool : PoolBase
         // update context
         lock(context)
         {
-            context.AddJob(job);
+            context.AddJob(job, manager.maxActiveJobs);
         }
 
         return result;
@@ -249,7 +248,19 @@ public class ProgpowPool : PoolBase
 
             // submit
             var share = await manager.SubmitShareAsync(connection, requestParams, ct);
-            await connection.RespondAsync(true, request.Id);
+
+            // Nicehash's stupid validator insists on "error" property present
+            // in successful responses which is a violation of the JSON-RPC spec
+            // [Respect the goddamn standards Nicehack :(]
+            var response = new JsonRpcResponse<object>(true, request.Id);
+
+            if(context.IsNicehash || poolConfig.EnableAsicBoost == true)
+            {
+                response.Extra = new Dictionary<string, object>();
+                response.Extra["error"] = null;
+            }
+
+            await connection.RespondAsync(response);
 
             // publish
             messageBus.SendMessage(share);
@@ -257,7 +268,7 @@ public class ProgpowPool : PoolBase
             // telemetry
             PublishTelemetry(TelemetryCategory.Share, clock.Now - tsRequest.Timestamp.UtcDateTime, true);
 
-            logger.Info(() => $"[{connection.ConnectionId}] Share accepted: D={Math.Round(share.Difficulty * coin.ShareMultiplier, 9)}");
+            logger.Info(() => $"[{connection.ConnectionId}] Share accepted: D={Math.Round(share.Difficulty * coin.ShareMultiplier, 3)}");
 
             // update pool stats
             if(share.IsBlockCandidate)
@@ -323,8 +334,6 @@ public class ProgpowPool : PoolBase
         switch(coin.Symbol)
         {
             case "FIRO":
-            case "KIIRO":
-            case "REALI":
                 return ctx.Resolve<ProgpowJobManager>(new TypedParameter(typeof(IExtraNonceProvider), new FiroExtraNonceProvider(poolConfig.Id, clusterConfig.InstanceId)));
             
             default:

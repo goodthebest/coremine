@@ -33,7 +33,7 @@ public class TransferRequest
     /// Number of outputs to mix in the transaction (this output + N decoys from the blockchain)
     /// </summary>
     [JsonProperty("ring_size")]
-    public uint RingSize { get; set; } = 16; //XEQ Error: Requested ring size 7 too low, using 16
+    public uint RingSize { get; set; } = 7;
 
     /// <summary>
     /// (Optional) Random 32-byte/64-character hex string to identify a transaction
@@ -65,12 +65,14 @@ public class TransferRequest
     /// </summary>
     [JsonProperty("tx_type", NullValueHandling = NullValueHandling.Ignore)]
     public uint? TransactionType { get; set; }
+
     // Salvium
     /// <summary>
     /// Define the type of coin to be sent
     /// </summary>
     [JsonProperty("source_asset", NullValueHandling = NullValueHandling.Ignore)]
     public string SourceAsset { get; set; }
+
     // Salvium
     /// <summary>
     /// Define the type of coin to be received

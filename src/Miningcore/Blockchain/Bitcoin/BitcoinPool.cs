@@ -262,9 +262,9 @@ public class BitcoinPool : PoolBase
             logger.Info(() => $"[{connection.ConnectionId}] Share rejected: {ex.Message} [{context.UserAgent}]");
 
             // banning
-            ConsiderBan(connection, context, poolConfig.Banning);
+           // ConsiderBan(connection, context, poolConfig.Banning);
 
-            throw;
+            //throw;
         }
     }
 

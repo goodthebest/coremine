@@ -16,8 +16,5 @@ namespace Miningcore.Blockchain.Bitcoin.DaemonResponses
 
         [JsonProperty("founder_payments_started")]
         public bool FounderPaymentsStarted { get; set; }
-
-	[JsonExtensionData]
-	public IDictionary<string, object> Extra { get; set; }
     }
 }

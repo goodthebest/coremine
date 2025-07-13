@@ -3,10 +3,6 @@ using Miningcore.Blockchain.Bitcoin;
 using Miningcore.Blockchain.Bitcoin.Configuration;
 using Miningcore.Blockchain.Bitcoin.DaemonResponses;
 using Miningcore.Blockchain.Progpow.Custom.Firo;
-using Miningcore.Blockchain.Progpow.Custom.Kiiro;
-using Miningcore.Blockchain.Progpow.Custom.Privora;
-using Miningcore.Blockchain.Progpow.Custom.Realichain;
-using Miningcore.Blockchain.Progpow.Custom.Telestai;
 using Miningcore.Configuration;
 using Miningcore.Contracts;
 using Miningcore.Crypto;
@@ -55,21 +51,8 @@ public class ProgpowJobManager : BitcoinJobManagerBase<ProgpowJob>
         {
             case "FIRO":
                 return new FiroJob();
-
-            case "KIIRO":
-                return new KiiroJob();
-
-            case "REALI":
-                return new RealichainJob();
-
-            case "TLS":
-                return new TelestaiJob();
-
-            case "VORA":
-                return new PrivoraJob();
-
         }
-
+        
         return new ProgpowJob();
     }
 
@@ -203,6 +186,12 @@ public class ProgpowJobManager : BitcoinJobManagerBase<ProgpowJob>
         return job?.GetJobParams(isNew);
     }
 
+    public override ProgpowJob GetJobForStratum()
+    {
+        var job = currentJob;
+        return job;
+    }
+
     #region API-Surface
 
     public override void Configure(PoolConfig pc, ClusterConfig cc)
@@ -282,7 +271,7 @@ public class ProgpowJobManager : BitcoinJobManagerBase<ProgpowJob>
 
         lock(context)
         {
-            if((job = context.FindJob(jobId)) == null)
+            if((job = context.GetJob(jobId)) == null)
                 throw new StratumException(StratumError.MinusOne, "invalid jobid");
         }
 

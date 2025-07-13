@@ -41,11 +41,10 @@ public abstract class BitcoinJobManagerBase<TJob> : JobManagerBase<TJob>
     protected RpcClient rpc;
     protected readonly IExtraNonceProvider extraNonceProvider;
     protected const int ExtranonceBytes = 4;
-    protected int maxActiveJobs = 4;
+    public int maxActiveJobs { get; protected set; } = 4;
     protected bool hasLegacyDaemon;
     protected BitcoinPoolConfigExtra extraPoolConfig;
     protected BitcoinPoolPaymentProcessingConfigExtra extraPoolPaymentProcessingConfig;
-    protected readonly List<TJob> validJobs = new();
     protected DateTime? lastJobRebroadcast;
     protected bool hasSubmitBlockMethod;
     protected bool isPoS;
@@ -548,7 +547,7 @@ public abstract class BitcoinJobManagerBase<TJob> : JobManagerBase<TJob>
         switch(addressType.Value)
         {
             case BitcoinAddressType.BechSegwit:
-                return BitcoinUtils.BechSegwitAddressToDestination(poolConfig.Address, network, extraPoolConfig?.BechPrefix);
+                return BitcoinUtils.BechSegwitAddressToDestination(poolConfig.Address, network);
 
             case BitcoinAddressType.BCash:
                 return BitcoinUtils.BCashAddressToDestination(poolConfig.Address, network);

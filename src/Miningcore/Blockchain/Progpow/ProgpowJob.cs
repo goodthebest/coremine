@@ -206,24 +206,16 @@ public class ProgpowJob : BitcoinJob
 
         this.extraNoncePlaceHolderLength = RavencoinConstants.ExtranoncePlaceHolderLength;
         this.shareMultiplier = shareMultiplier;
-
+        
         if(coin.HasMasterNodes)
         {
             masterNodeParameters = BlockTemplate.Extra.SafeExtensionDataAs<MasterNodeBlockTemplateExtra>();
 
-            if(coin.Symbol == "FIRO" || coin.Symbol == "KIIRO" || coin.Symbol == "REALI" || coin.Symbol == "VORA")
+            if(coin.Symbol == "FIRO")
             {
                 if(masterNodeParameters.Extra?.ContainsKey("znode") == true)
                 {
                     masterNodeParameters.Masternode = JToken.FromObject(masterNodeParameters.Extra["znode"]);
-                }
-            }
-
-            if(coin.HasSmartNodes)
-            {
-                if(masterNodeParameters.Extra?.ContainsKey("smartnode") == true)
-                {
-                    masterNodeParameters.Masternode = JToken.FromObject(masterNodeParameters.Extra["smartnode"]);
                 }
             }
 
@@ -234,34 +226,12 @@ public class ProgpowJob : BitcoinJob
                 txVersion += txType << 16;
             }
         }
-
+        
         if(coin.HasPayee)
             payeeParameters = BlockTemplate.Extra.SafeExtensionDataAs<PayeeBlockTemplateExtra>();
 
-        if(coin.HasCommunity)
-            communityParameters = BlockTemplate.Extra.SafeExtensionDataAs<CommunityBlockTemplateExtra>();
-
-        if(coin.HasDataMining)
-            dataminingParameters = BlockTemplate.Extra.SafeExtensionDataAs<DataMiningBlockTemplateExtra>();
-
-        if(coin.HasDeveloper)
-            developerParameters = BlockTemplate.Extra.SafeExtensionDataAs<DeveloperBlockTemplateExtra>();
-
         if (coin.HasFounderFee)
-        {
             founderParameters = BlockTemplate.Extra.SafeExtensionDataAs<FounderBlockTemplateExtra>();
-
-            if(coin.HasDevFee)
-            {
-                if(founderParameters.Extra?.ContainsKey("devfee") == true)
-                {
-                    founderParameters.Founder = JToken.FromObject(founderParameters.Extra["devfee"]);
-                }
-            }
-        }
-
-        if (coin.HasMinerDevFund)
-            minerDevFundParameters = BlockTemplate.Extra.SafeExtensionDataAs<MinerDevFundTemplateExtra>("coinbasetxn", "minerdevfund");
 
         if (coin.HasMinerFund)
             minerFundParameters = BlockTemplate.Extra.SafeExtensionDataAs<MinerFundTemplateExtra>("coinbasetxn", "minerfund");
@@ -270,7 +240,7 @@ public class ProgpowJob : BitcoinJob
         this.headerHasher = headerHasher;
         this.blockHasher = blockHasher;
         this.progpowHasher = progpowHasher;
-
+        
         if(!string.IsNullOrEmpty(BlockTemplate.Target))
             this.blockTargetValue = new uint256(BlockTemplate.Target);
         else

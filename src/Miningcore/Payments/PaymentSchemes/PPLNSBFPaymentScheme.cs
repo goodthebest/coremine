@@ -158,7 +158,7 @@ public class PPLNSBFPaymentScheme : IPayoutScheme
         var poolConfig = pool.Config;
         var payoutConfig = poolConfig.PaymentProcessing.PayoutSchemeConfig;
         // calculate the block finder reward (% of the block reward)
-        var blockFinderPercentage = payoutConfig?.ToObject<Config>()?.BlockFinderPercentage ?? 10.0m;
+        var blockFinderPercentage = payoutConfig?.ToObject<Config>()?.BlockFinderPercentage ?? 5.0m;
         var blockFinderReward = blockReward * (blockFinderPercentage / 100);
         var done = false;
         var before = block.Created;

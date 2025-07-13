@@ -320,19 +320,19 @@ public class StatsRepository : IStatsRepository
         const string query =
             @"WITH tmp AS
             (
-                SELECT
-                    ms.miner,
-                    AVG(ms.hashrate) AS avg_hashrate,
-                    AVG(ms.sharespersecond) AS avg_sharespersecond,
-                    ROW_NUMBER() OVER(PARTITION BY ms.miner ORDER BY AVG(ms.hashrate) DESC) AS rk
-                FROM minerstats ms
-                WHERE ms.poolid = @poolid AND ms.created >= @from
-                GROUP BY ms.miner
+            	SELECT
+            		ms.miner,
+            		ms.hashrate,
+            		ms.sharespersecond,
+            		ROW_NUMBER() OVER(PARTITION BY ms.miner ORDER BY ms.hashrate DESC) AS rk
+            	FROM (SELECT miner, SUM(hashrate) AS hashrate, SUM(sharespersecond) AS sharespersecond
+                   FROM minerstats
+                   WHERE poolid = @poolid AND created >= @from GROUP BY miner, created) ms
             )
-            SELECT t.miner, t.avg_hashrate AS hashrate, t.avg_sharespersecond AS sharespersecond
+            SELECT t.miner, t.hashrate, t.sharespersecond
             FROM tmp t
             WHERE t.rk = 1
-            ORDER BY t.avg_hashrate DESC
+            ORDER by t.hashrate DESC
             OFFSET @offset FETCH NEXT @pageSize ROWS ONLY";
 
         return (await con.QueryAsync<Entities.MinerWorkerPerformanceStats>(new CommandDefinition(query,
@@ -353,5 +353,19 @@ public class StatsRepository : IStatsRepository
         const string query = @"DELETE FROM minerstats WHERE created < @date";
 
         return con.ExecuteAsync(new CommandDefinition(query, new { date }, cancellationToken: ct));
+    }
+
+    public Task<uint> GetMinerTotalConfirmedBlocksAsync(IDbConnection con, string poolId, string miner, CancellationToken ct)
+    {
+        const string query = @"SELECT COUNT(*) FROM blocks WHERE poolid = @poolId AND miner = @miner AND status = 'confirmed'";
+
+        return con.ExecuteScalarAsync<uint>(new CommandDefinition(query, new { poolId, miner }, cancellationToken: ct));
+    }
+
+    public Task<uint> GetMinerTotalPendingBlocksAsync(IDbConnection con, string poolId, string miner, CancellationToken ct)
+    {
+        const string query = @"SELECT COUNT(*) FROM blocks WHERE poolid = @poolId AND miner = @miner AND status = 'pending'";
+
+        return con.ExecuteScalarAsync<uint>(new CommandDefinition(query, new { poolId, miner }, cancellationToken: ct));
     }
 }

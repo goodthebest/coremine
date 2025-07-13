@@ -1,6 +1,8 @@
 using Miningcore.Native;
 using static Miningcore.Native.Cryptonight.Algorithm;
+
 namespace Miningcore.Crypto.Hashing.Algorithms;
+
 [Identifier("mike")]
 public class Mike : IHashAlgorithm
 {

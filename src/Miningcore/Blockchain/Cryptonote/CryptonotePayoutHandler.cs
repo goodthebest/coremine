@@ -52,7 +52,6 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
     private CryptonoteNetworkType? networkType;
     private CryptonotePoolPaymentProcessingConfigExtra extraConfig;
     private bool walletSupportsTransferSplit;
-	
 
     protected override string LogCategory => "Cryptonote Payout Handler";
 
@@ -201,6 +200,7 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
             return false;
 
         TransferRequest request;
+
         // not all Cryptonote coins are equal
         switch(coin.Symbol)
         {
@@ -213,6 +213,7 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
                         .Select(x =>
                         {
                             ExtractAddressAndPaymentId(x.Address, out var address, out _);
+
                             return new TransferDestination
                             {
                                 Address = address,
@@ -220,6 +221,7 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
                                 AssetType = coin.Symbol
                             };
                         }).ToArray(),
+
                     TransactionType = (uint) SalviumTransactionType.Transfer,
                     SourceAsset = coin.Symbol,
                     DestinationAsset = coin.Symbol,
@@ -235,12 +237,14 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
                         .Select(x =>
                         {
                             ExtractAddressAndPaymentId(x.Address, out var address, out _);
+
                             return new TransferDestination
                             {
                                 Address = address,
                                 Amount = (ulong) Math.Floor(x.Amount * coin.SmallestUnit)
                             };
                         }).ToArray(),
+
                     GetTxKey = true
                 };
                 break;
@@ -306,6 +310,7 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
             return false;
 
         TransferRequest request;
+
         // not all Cryptonote coins are equal
         switch(coin.Symbol)
         {
@@ -322,6 +327,7 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
                             AssetType = coin.Symbol
                         }
                     },
+
                     TransactionType = (uint) SalviumTransactionType.Transfer,
                     PaymentId = paymentId,
                     SourceAsset = coin.Symbol,
@@ -341,6 +347,7 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
                             Amount = (ulong) Math.Floor(balance.Amount * coin.SmallestUnit)
                         }
                     },
+
                     PaymentId = paymentId,
                     GetTxKey = true
                 };
@@ -467,8 +474,7 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
                 var blockHeader = rpcResult.Response.BlockHeader;
 
                 // update progress
-				int PayoutMinBlockConfirmations = coin?.CoinbaseMinConfimations ?? CryptonoteConstants.PayoutMinBlockConfirmations;
-                block.ConfirmationProgress = Math.Min(1.0d, (double) blockHeader.Depth / PayoutMinBlockConfirmations);
+                block.ConfirmationProgress = Math.Min(1.0d, (double) blockHeader.Depth / CryptonoteConstants.PayoutMinBlockConfirmations);
                 result.Add(block);
 
                 messageBus.NotifyBlockConfirmationProgress(poolConfig.Id, block, coin);
@@ -484,7 +490,7 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
                 }
 
                 // matured and spendable?
-                if(blockHeader.Depth >= PayoutMinBlockConfirmations)
+                if(blockHeader.Depth >= CryptonoteConstants.PayoutMinBlockConfirmations)
                 {
                     block.Status = BlockStatus.Confirmed;
                     block.ConfirmationProgress = 1;
@@ -513,25 +519,6 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
 
                             block.Reward = (((blockHeader.Reward / coin.SmallestUnit) / (1m - reserveReward)) * miningReward) * coin.BlockrewardMultiplier;
                             break;
-
-                        case "XEQ":
-                            decimal EquilibriaMiningReward = EquilibriaConstants.EquilibriaMiningRewardInitial;
-                            
-                            block.Reward = (((blockHeader.Reward / coin.SmallestUnit)) * EquilibriaMiningReward) * coin.BlockrewardMultiplier;
-                            break;
-
-                        case "MRL":
-                            decimal MoreloReserveReward = MoreloConstants.MoreloReserveRewardInitial;
-                            
-                            block.Reward = (((blockHeader.Reward / coin.SmallestUnit)) - MoreloReserveReward) * coin.BlockrewardMultiplier;
-                            break;
-
-                        case "GNTL":
-                            decimal GntlMiningReward = GntlConstants.GntlMiningRewardInitial;
-                            
-                            block.Reward = (((blockHeader.Reward / coin.SmallestUnit)) * GntlMiningReward) * coin.BlockrewardMultiplier;
-                            break;
-
                         default:
                             block.Reward = (blockHeader.Reward / coin.SmallestUnit) * coin.BlockrewardMultiplier;
                             break;
@@ -553,10 +540,7 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
         var blockRewardRemaining = await base.UpdateBlockRewardBalancesAsync(con, tx, pool, block, ct);
 
         // Deduct static reserve for tx fees
-		var coin = poolConfig.Template.As<CryptonoteCoinTemplate>();
-		var StaticTransactionFeeReserve = (coin.Symbol == "MRL") ? MoreloConstants.MoreloStaticTransactionFeeReserve : CryptonoteConstants.StaticTransactionFeeReserve;
-
-        blockRewardRemaining -= StaticTransactionFeeReserve;
+        blockRewardRemaining -= CryptonoteConstants.StaticTransactionFeeReserve;
 
         return blockRewardRemaining;
     }
@@ -658,9 +642,11 @@ public class CryptonotePayoutHandler : PayoutHandlerBase,
                 await PayoutBatch(simpleBalances);
 #else
         {
-            var maxBatchSize = 15;  // going over 15 yields "sv/gamma are too large"
+            var maxBatchSize = extraConfig?.MaximumDestinationPerTransfer ?? 15;  // going over 15 yields "sv/gamma are too large"
             var pageSize = maxBatchSize;
             var pageCount = (int) Math.Ceiling((double) simpleBalances.Length / pageSize);
+
+            logger.Info(() => $"[{LogCategory}] Maximum of simultaneous destination address in a single transaction: {maxBatchSize}");
 
             for(var i = 0; i < pageCount; i++)
             {

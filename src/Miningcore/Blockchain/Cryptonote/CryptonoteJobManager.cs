@@ -183,90 +183,6 @@ public class CryptonoteJobManager : JobManagerBase<CryptonoteJob>
 
                 break;
             }
-
-            case CryptonightHashType.RandomSCASH:
-            {
-                // detect seed hash change
-                if(currentSeedHash != blockTemplate.SeedHash)
-                {
-                    logger.Info(()=> $"Detected new seed hash {blockTemplate.SeedHash} starting @ height {blockTemplate.Height}");
-
-                    if(poolConfig.EnableInternalStratum == true)
-                    {
-                        RandomSCASH.WithLock(() =>
-                        {
-                            // delete old seed
-                            if(currentSeedHash != null)
-                                RandomSCASH.DeleteSeed(randomXRealm, currentSeedHash);
-
-                            // activate new one
-                            currentSeedHash = blockTemplate.SeedHash;
-                            RandomSCASH.CreateSeed(randomXRealm, currentSeedHash, randomXFlagsOverride, randomXFlagsAdd, extraPoolConfig.RandomXVMCount);
-                        });
-                    }
-
-                    else
-                        currentSeedHash = blockTemplate.SeedHash;
-                }
-
-                break;
-            }
-
-            case CryptonightHashType.RandomXEQ:
-            {
-                // detect seed hash change
-                if(currentSeedHash != blockTemplate.SeedHash)
-                {
-                    logger.Info(()=> $"Detected new seed hash {blockTemplate.SeedHash} starting @ height {blockTemplate.Height}");
-
-                    if(poolConfig.EnableInternalStratum == true)
-                    {
-                        RandomXEQ.WithLock(() =>
-                        {
-                            // delete old seed
-                            if(currentSeedHash != null)
-                                RandomXEQ.DeleteSeed(randomXRealm, currentSeedHash);
-
-                            // activate new one
-                            currentSeedHash = blockTemplate.SeedHash;
-                            RandomXEQ.CreateSeed(randomXRealm, currentSeedHash, randomXFlagsOverride, randomXFlagsAdd, extraPoolConfig.RandomXVMCount);
-                        });
-                    }
-
-                    else
-                        currentSeedHash = blockTemplate.SeedHash;
-                }
-
-                break;
-            }
-
-            case CryptonightHashType.Panthera:
-            {
-                // detect seed hash change
-                if(currentSeedHash != blockTemplate.SeedHash)
-                {
-                    logger.Info(()=> $"Detected new seed hash {blockTemplate.SeedHash} starting @ height {blockTemplate.Height}");
-
-                    if(poolConfig.EnableInternalStratum == true)
-                    {
-                        Panthera.WithLock(() =>
-                        {
-                            // delete old seed
-                            if(currentSeedHash != null)
-                                Panthera.DeleteSeed(randomXRealm, currentSeedHash);
-
-                            // activate new one
-                            currentSeedHash = blockTemplate.SeedHash;
-                            Panthera.CreateSeed(randomXRealm, currentSeedHash, randomXFlagsOverride, randomXFlagsAdd, extraPoolConfig.RandomXVMCount);
-                        });
-                    }
-
-                    else
-                        currentSeedHash = blockTemplate.SeedHash;
-                }
-
-                break;
-            }
         }
     }
 
@@ -342,6 +258,23 @@ public class CryptonoteJobManager : JobManagerBase<CryptonoteJob>
         }
 
         return true;
+    }
+
+    public void PrepareWorkerJob(CryptonoteWorkerJob workerJob, out string blob, out string target)
+    {
+        blob = null;
+        target = null;
+
+        var job = currentJob;
+
+        if(job != null)
+            job.PrepareWorkerJob(workerJob, out blob, out target);
+    }
+
+    public override CryptonoteJob GetJobForStratum()
+    {
+        var job = currentJob;
+        return job;
     }
 
     #region API-Surface
@@ -438,22 +371,6 @@ public class CryptonoteJobManager : JobManagerBase<CryptonoteJob>
     }
 
     public BlockchainStats BlockchainStats { get; } = new();
-
-    public void PrepareWorkerJob(CryptonoteWorkerJob workerJob, out string blob, out string target)
-    {
-        blob = null;
-        target = null;
-
-        var job = currentJob;
-
-        if(job != null)
-        {
-            lock(job)
-            {
-                job.PrepareWorkerJob(workerJob, out blob, out target);
-            }
-        }
-    }
 
     public async ValueTask<Share> SubmitShareAsync(StratumConnection worker,
         CryptonoteSubmitShareRequest request, CryptonoteWorkerJob workerJob, CancellationToken ct)
@@ -585,10 +502,6 @@ public class CryptonoteJobManager : JobManagerBase<CryptonoteJob>
     {
         var response = await rpc.ExecuteAsync<GetInfoResponse>(logger, CryptonoteCommands.GetInfo, ct);
 
-        // update stats
-        if(!string.IsNullOrEmpty(response?.Response.Version))
-            BlockchainStats.NodeVersion = response?.Response.Version;
-
         return response.Error == null && response.Response != null &&
             (response.Response.OutgoingConnectionsCount + response.Response.IncomingConnectionsCount) > 0;
     }
@@ -708,6 +621,25 @@ public class CryptonoteJobManager : JobManagerBase<CryptonoteJob>
                     ex=> logger.Error(ex))))
             .Concat()
             .Subscribe();
+
+        if(poolConfig.EnableInternalStratum == true)
+        {
+            // make sure we have a current light cache
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+
+            do
+            {
+                var blockTemplate = await GetBlockTemplateAsync(ct);
+
+                if(blockTemplate?.Response != null)
+                {
+                    UpdateHashParams(blockTemplate.Response);
+                    break;
+                }
+
+                logger.Info(() => "Waiting for first valid block template");
+            } while(await timer.WaitForNextTickAsync(ct));
+        }
 
         SetupJobUpdates(ct);
     }

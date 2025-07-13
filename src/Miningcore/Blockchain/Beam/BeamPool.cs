@@ -43,6 +43,7 @@ public class BeamPool : PoolBase
     }
 
     protected BeamJobManager manager;
+    private BeamPoolConfigExtra extraPoolConfig;
     private BeamCoinTemplate coin;
     
     private async Task OnLoginAsync(StratumConnection connection, Timestamped<JsonRpcRequest> tsRequest, CancellationToken ct)
@@ -74,7 +75,6 @@ public class BeamPool : PoolBase
         {
             // extract control vars from password
             var staticDiff = GetStaticDiffFromPassparts(passParts);
-            var startDiff = GetStartDiffFromPassparts(passParts);
 
             // Nicehash support
             var nicehashDiff = await GetNicehashStaticMinDiff(context, coin.Name, coin.GetAlgorithmName());
@@ -93,7 +93,9 @@ public class BeamPool : PoolBase
             }
             
             // Static diff
-            if(staticDiff.HasValue && !startDiff.HasValue && (context.VarDiff != null && staticDiff.Value >= context.VarDiff.Config.MinDiff || context.VarDiff == null && staticDiff.Value > context.Difficulty))
+            if(staticDiff.HasValue &&
+               (context.VarDiff != null && staticDiff.Value >= context.VarDiff.Config.MinDiff ||
+                   context.VarDiff == null && staticDiff.Value > context.Difficulty))
             {
                 context.VarDiff = null; // disable vardiff
                 context.SetDifficulty(staticDiff.Value);
@@ -101,12 +103,6 @@ public class BeamPool : PoolBase
                 logger.Info(() => $"[{connection.ConnectionId}] Setting static difficulty of {staticDiff.Value}");
             }
             
-            // Start diff
-            if(startDiff.HasValue && (context.VarDiff != null && startDiff.Value >= context.VarDiff.Config.MinDiff || context.VarDiff == null && startDiff.Value > context.Difficulty))
-            {
-                context.SetDifficulty(startDiff.Value);
-                logger.Info(() => $"[{connection.ConnectionId}] Start difficulty set to {startDiff.Value}");
-            }
             // setup worker context
             context.IsSubscribed = true;
             
@@ -125,15 +121,15 @@ public class BeamPool : PoolBase
             // log association
             logger.Info(() => $"[{connection.ConnectionId}] Authorized worker {workerValue}");
             
-            var currentJobParams = manager.GetJobParamsForStratum();
-            logger.Info(() => $"Broadcasting job {currentJobParams[0]}");
+            var minerJobParams = CreateWorkerJob(connection);
+            logger.Info(() => $"Broadcasting job {minerJobParams[0]}");
             
             // response
             var jobResponse = new BeamJobResponse {
-                Id = (string) currentJobParams[0],
-                Height = (ulong) currentJobParams[1],
+                Id = (string) minerJobParams[0],
+                Height = (ulong) minerJobParams[1],
                 Difficulty = BeamUtils.PackedDifficulty(connection.Context.Difficulty),
-                Input = (string) currentJobParams[4],
+                Input = (string) minerJobParams[4],
                 Nonceprefix = context.ExtraNonce1
             };
             
@@ -162,6 +158,21 @@ public class BeamPool : PoolBase
                 Disconnect(connection);
             }
         }
+    }
+
+    private object[] CreateWorkerJob(StratumConnection connection)
+    {
+        var context = connection.ContextAs<BeamWorkerContext>();
+        var maxActiveJobs = extraPoolConfig?.MaxActiveJobs ?? 4;
+        var job = manager.GetJobForStratum();
+
+        // update context
+        lock(context)
+        {
+            context.AddJob(job, maxActiveJobs);
+        }
+
+        return job.GetJobParamsForStratum();
     }
 
     protected virtual async Task OnSubmitAsync(StratumConnection connection, Timestamped<JsonRpcRequest> tsRequest, CancellationToken ct)
@@ -354,20 +365,19 @@ public class BeamPool : PoolBase
 
     protected async Task OnNewJobAsync(object[] jobParams)
     {
-        var currentJobParams = jobParams;
-
-        logger.Info(() => $"Broadcasting job {currentJobParams[0]}");
+        logger.Info(() => $"Broadcasting job {jobParams[0]}");
 
         await Guard(() => ForEachMinerAsync(async (connection, ct) =>
         {
             var context = connection.ContextAs<BeamWorkerContext>();
+            var minerJobParams = CreateWorkerJob(connection);
             
             // response
             var jobResponse = new BeamJobResponse {
-                Id = (string) currentJobParams[0],
-                Height = (ulong) currentJobParams[1],
+                Id = (string) minerJobParams[0],
+                Height = (ulong) minerJobParams[1],
                 Difficulty = BeamUtils.PackedDifficulty(context.Difficulty),
-                Input = (string) currentJobParams[4],
+                Input = (string) minerJobParams[4],
                 Nonceprefix = context.ExtraNonce1
             };
             
@@ -381,6 +391,7 @@ public class BeamPool : PoolBase
     public override void Configure(PoolConfig pc, ClusterConfig cc)
     {
         coin = pc.Template.As<BeamCoinTemplate>();
+        extraPoolConfig = pc.Extra.SafeExtensionDataAs<BeamPoolConfigExtra>();
 
         base.Configure(pc, cc);
     }
@@ -467,17 +478,18 @@ public class BeamPool : PoolBase
     {
         await base.OnVarDiffUpdateAsync(connection, newDiff, ct);
 
-        if(connection.Context.ApplyPendingDifficulty())
+        var context = connection.ContextAs<BeamWorkerContext>();
+
+        if(context.ApplyPendingDifficulty())
         {
-            var currentJobParams = manager.GetJobParamsForStratum();
-            var context = connection.ContextAs<BeamWorkerContext>();
-            
+            var minerJobParams = CreateWorkerJob(connection);
+
             // response
             var jobResponse = new BeamJobResponse {
-                Id = (string) currentJobParams[0],
-                Height = (ulong) currentJobParams[1],
+                Id = (string) minerJobParams[0],
+                Height = (ulong) minerJobParams[1],
                 Difficulty = BeamUtils.PackedDifficulty(context.Difficulty),
-                Input = (string) currentJobParams[4],
+                Input = (string) minerJobParams[4],
                 Nonceprefix = context.ExtraNonce1
             };
             

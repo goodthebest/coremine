@@ -10,9 +10,6 @@ public static unsafe class Multihash
     [DllImport("libmultihash", EntryPoint = "quark_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void quark(byte* input, void* output, uint inputLength);
 
-    [DllImport("libmultihash", EntryPoint = "xelisv2_pepew_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void xelisv2_pepew(byte* input, void* output, uint inputLength);
-
     [DllImport("libmultihash", EntryPoint = "sha256csm_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void sha256csm(byte* input, void* output, uint inputLength);
 
@@ -21,13 +18,13 @@ public static unsafe class Multihash
 
     [DllImport("libmultihash", EntryPoint = "sha3_512_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void sha3_512(byte* input, void* output, uint inputLength);
-
+    
     [DllImport("libmultihash", EntryPoint = "cshake128_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void cshake128(byte* input, uint inputLength, byte* name, uint nameLength, byte* custom, uint customLength, void* output, uint outputLength);
 
     [DllImport("libmultihash", EntryPoint = "cshake256_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void cshake256(byte* input, uint inputLength, byte* name, uint nameLength, byte* custom, uint customLength, void* output, uint outputLength);
-
+    
     [DllImport("libmultihash", EntryPoint = "shake128_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void shake128(byte* input, uint inputLength, void* output, uint outputLength);
 
@@ -40,14 +37,8 @@ public static unsafe class Multihash
     [DllImport("libmultihash", EntryPoint = "phi_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void phi(byte* input, void* output, uint inputLength);
 
-    [DllImport("libmultihash", EntryPoint = "phi2_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void phi2(byte* input, void* output, uint inputLength);
-
     [DllImport("libmultihash", EntryPoint = "x11_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void x11(byte* input, void* output, uint inputLength);
-
-    [DllImport("libmultihash", EntryPoint = "x11kvs_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void x11kvs(byte* input, void* output, uint inputLength);
 
     [DllImport("libmultihash", EntryPoint = "x13_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void x13(byte* input, void* output, uint inputLength);
@@ -105,7 +96,7 @@ public static unsafe class Multihash
 
     [DllImport("libmultihash", EntryPoint = "blake2b_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void blake2b(byte* input, void* output, uint inputLength, int outputLength, byte* key, uint keyLength);
-
+    
     [DllImport("libmultihash", EntryPoint = "blake3_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void blake3(byte* input, void* output, uint inputLength, byte* key, uint keyLength);
 
@@ -177,12 +168,9 @@ public static unsafe class Multihash
 
     [DllImport("libmultihash", EntryPoint = "sha256dt_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void sha256dt(byte* input, void* output);
-
+    
     [DllImport("libmultihash", EntryPoint = "minotaurx_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void minotaurx(byte* input, void* output);
-
-    [DllImport("libmultihash", EntryPoint = "memehash_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void memehash(byte* input, void* output, uint inputLength);
 
     [DllImport("libmultihash", EntryPoint = "skydoge_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void skydoge(byte* input, void* output, uint inputLength);
@@ -202,24 +190,6 @@ public static unsafe class Multihash
     [DllImport("libmultihash", EntryPoint = "allium_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void allium(byte* input, void* output, uint inputLength);
 
-    [DllImport("libmultihash", EntryPoint = "argon2d250_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void argon2d250(byte* input, void* output, uint inputLength);
-
-    [DllImport("libmultihash", EntryPoint = "argon2d500_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void argon2d500(byte* input, void* output, uint inputLength);
-
-    [DllImport("libmultihash", EntryPoint = "argon2d1000_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void argon2d1000(byte* input, void* output, uint inputLength);
-
-    [DllImport("libmultihash", EntryPoint = "argon2d16000_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void argon2d16000(byte* input, void* output, uint inputLength);
-
-    [DllImport("libmultihash", EntryPoint = "aurum_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void aurum(byte* input, void* output, uint inputLength);
-
-    [DllImport("libmultihash", EntryPoint = "megabtx_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void megabtx(byte* input, void* output, uint inputLength);
-
     [DllImport("libmultihash", EntryPoint = "cpupower_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void cpupower(byte* input, void* output, uint inputLength);
 
@@ -229,61 +199,33 @@ public static unsafe class Multihash
     [DllImport("libmultihash", EntryPoint = "yespower_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void yespower(byte* input, void* output, uint inputLength);
 
-    [DllImport("libmultihash", EntryPoint = "yespowerADVC_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void yespowerADVC(byte* input, void* output, uint inputLength);
-
-    [DllImport("libmultihash", EntryPoint = "yespowerEQPAY_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void yespowerEQPAY(byte* input, void* output, uint inputLength);
-
     [DllImport("libmultihash", EntryPoint = "yespowerIC_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void yespowerIC(byte* input, void* output, uint inputLength);
 
     [DllImport("libmultihash", EntryPoint = "yespowerR16_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void yespowerR16(byte* input, void* output, uint inputLength);
 
-    [DllImport("libmultihash", EntryPoint = "yespowerLTNCG_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void yespowerLTNCG(byte* input, void* output, uint inputLength);
-
-    [DllImport("libmultihash", EntryPoint = "yespowerMGPC_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void yespowerMGPC(byte* input, void* output, uint inputLength);
-
     [DllImport("libmultihash", EntryPoint = "yespowerTIDE_export", CallingConvention = CallingConvention.Cdecl)]
     public static extern void yespowerTIDE(byte* input, void* output, uint inputLength);
 
-    [DllImport("libmultihash", EntryPoint = "x11gost_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void x11gost(byte* input, void* output, uint inputLength);
-
-    [DllImport("libmultihash", EntryPoint = "evohash_export", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void evohash(byte* input, void* output, uint inputLength);
+    [DllImport("libmultihash", EntryPoint = "flex_export", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void flex(byte* input, void* output);
 
     [DllImport("libmultihash", EntryPoint = "fishhash_get_context", CallingConvention = CallingConvention.Cdecl)]
     public static extern IntPtr fishhashGetContext(bool fullContext = false);
-
-    [DllImport("libmultihash", EntryPoint = "fishhash_kernel", CallingConvention = CallingConvention.Cdecl)]
-    public static extern Fishhash_hash256 fishhashKernel(IntPtr context, ref Fishhash_hash512 seed);
-
-    [DllImport("libmultihash", EntryPoint = "fishhashplus_kernel", CallingConvention = CallingConvention.Cdecl)]
-    public static extern Fishhash_hash256 fishhashplusKernel(IntPtr context, ref Fishhash_hash512 seed);
 
     [DllImport("libmultihash", EntryPoint = "fishhash_prebuild_dataset", CallingConvention = CallingConvention.Cdecl)]
     public static extern void fishhashPrebuildDataset(IntPtr context, uint number_threads = 1);
 
     [DllImport("libmultihash", EntryPoint = "fishhash_hash", CallingConvention = CallingConvention.Cdecl)]
-    public static extern void fishhash(void* output, IntPtr context, byte* input, uint inputLength, bool enableFishHashPlus = false);
+    public static extern void fishhash(void* output, IntPtr context, byte* input, uint inputLength, byte fishHashKernel = 1);
 
-    [StructLayout(LayoutKind.Explicit)]
-    public struct Fishhash_hash256
-    {
-        [FieldOffset(0)]
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
-        public byte[] bytes;//x32
-    }
+    [DllImport("libmultihash", EntryPoint = "fishhaskarlsen_hash", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void fishhaskarlsen(void* output, IntPtr context, byte* input, uint inputLength, byte fishHashKernel = 1);
 
-    [StructLayout(LayoutKind.Explicit)]
-    public struct Fishhash_hash512
-    {
-        [FieldOffset(0)]
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 64)]
-        public byte[] bytes;//x64
-    }
+    [DllImport("libmultihash", EntryPoint = "xelis_hash_export", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void xelishash(byte* input, void* output, uint inputLength);
+
+    [DllImport("libmultihash", EntryPoint = "xelis_hash_v2_export", CallingConvention = CallingConvention.Cdecl)]
+    public static extern void xelishashv2(byte* input, void* output, uint inputLength);
 }

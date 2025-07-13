@@ -31,22 +31,10 @@ public class ApiCoinConfig
     public string Discord { get; set; }
 
     [System.Text.Json.Serialization.JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public string Github{ get; set; }
-
-    [System.Text.Json.Serialization.JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string Telegram { get; set; }
 
     [System.Text.Json.Serialization.JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string CanonicalName { get; set; }
-}
-
-public class ApiPoolPayoutSchemeConfig
-{
-    [System.Text.Json.Serialization.JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public decimal? Factor { get; set; } = 2.0m;
-
-    [System.Text.Json.Serialization.JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public decimal? BlockFinderPercentage { get; set; } = 5.0m;
 }
 
 public class ApiPoolPaymentProcessingConfig
@@ -54,7 +42,7 @@ public class ApiPoolPaymentProcessingConfig
     public bool Enabled { get; set; }
     public decimal MinimumPayment { get; set; } // in pool-base-currency (ie. Bitcoin, not Satoshis)
     public string PayoutScheme { get; set; }
-    public ApiPoolPayoutSchemeConfig PayoutSchemeConfig { get; set; }
+    public JToken PayoutSchemeConfig { get; set; }
 
     [Newtonsoft.Json.JsonExtensionData]
     public IDictionary<string, object> Extra { get; set; }
@@ -83,6 +71,9 @@ public partial class PoolInfo
     public MinerPerformanceStats[] TopMiners { get; set; }
     public decimal TotalPaid { get; set; }
     public uint TotalBlocks { get; set; }
+    public uint TotalConfirmedBlocks { get; set; }
+    public uint TotalPendingBlocks { get; set; }
+    public decimal BlockReward { get; set; }
     public DateTime? LastPoolBlockTime { get; set; }
     public double PoolEffort { get; set; }
 }

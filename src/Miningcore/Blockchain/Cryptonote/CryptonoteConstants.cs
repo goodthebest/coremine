@@ -42,28 +42,6 @@ public static class CryptonoteConstants
     public const decimal StaticTransactionFeeReserve = 0.03m; // in monero
 }
 
-public static class GntlConstants
-{
-    public const decimal GntlMiningRewardInitial = 0.99m; 
-}
-
-public static class MoreloConstants
-{
-    public const decimal MoreloReserveRewardInitial = 5.555m; // MiningReward = BlockReward - ReserveReward 
-    public const decimal MoreloStaticTransactionFeeReserve = 1.0m; // Deduct static reserve for tx fees
-}
-
-public static class EquilibriaConstants
-{
-    public const int EquilibriaBlobType = 5;
-    public const decimal EquilibriaMiningRewardInitial = 0.25m;
-}
-
-public static class ScalaConstants
-{
-    public const int ScalaBlobType = 14;
-}
-
 public static class ZephyrConstants
 {
     public const int BlobType = 13;

@@ -53,6 +53,8 @@ public abstract class PoolBase : StratumServer,
 
         this.serializerSettings = serializerSettings;
         this.cf = cf;
+        blocksRepo = ctx.Resolve<IBlockRepository>();
+        shareRepo = ctx.Resolve<IShareRepository>();
         this.statsRepo = statsRepo;
         this.mapper = mapper;
         this.nicehashService = nicehashService;
@@ -61,6 +63,8 @@ public abstract class PoolBase : StratumServer,
     protected PoolStats poolStats = new();
     protected readonly JsonSerializerSettings serializerSettings;
     protected readonly IConnectionFactory cf;
+    protected readonly IBlockRepository blocksRepo;
+    protected readonly IShareRepository shareRepo;
     protected readonly IStatsRepository statsRepo;
     protected readonly IMapper mapper;
     protected readonly NicehashService nicehashService;
@@ -69,7 +73,6 @@ public abstract class PoolBase : StratumServer,
     protected static readonly TimeSpan maxShareAge = TimeSpan.FromSeconds(6);
     protected static readonly TimeSpan loginFailureBanTimeout = TimeSpan.FromSeconds(10);
     protected static readonly Regex regexStaticDiff = new(@";?d=(\d*(\.\d+)?)", RegexOptions.Compiled);
-    protected static readonly Regex regexStartDiff = new(@";?sd=(\d*(\.\d+)?)", RegexOptions.Compiled);
     protected const string PasswordControlVarsSeparator = ";";
 
     protected abstract Task SetupJobManager(CancellationToken ct);
@@ -83,27 +86,6 @@ public abstract class PoolBase : StratumServer,
         foreach(var part in parts)
         {
             var m = regexStaticDiff.Match(part);
-
-            if(m.Success)
-            {
-                var str = m.Groups[1].Value.Trim();
-                if(double.TryParse(str, NumberStyles.Float, CultureInfo.InvariantCulture, out var diff) &&
-                   !double.IsNaN(diff) && !double.IsInfinity(diff))
-                    return diff;
-            }
-        }
-
-        return null;
-    }
-
-    protected double? GetStartDiffFromPassparts(string[] parts)
-    {
-        if(parts == null || parts.Length == 0)
-            return null;
-
-        foreach(var part in parts)
-        {
-            var m = regexStartDiff.Match(part);
 
             if(m.Success)
             {
@@ -232,6 +214,7 @@ public abstract class PoolBase : StratumServer,
             {
                 if(!_ct.IsCancellationRequested && connection.IsAlive && connection.Context.IsAuthorized)
                 {
+                    await SuspiciousMinerEffortCheck(connection, ct);
                     ZombieCheck(connection);
 
                     await func(connection, _ct);
@@ -245,6 +228,27 @@ public abstract class PoolBase : StratumServer,
                 Disconnect(connection);
             }
         });
+    }
+
+    protected async Task SuspiciousMinerEffortCheck(StratumConnection connection, CancellationToken ct)
+    {
+        if(poolConfig.Banning?.Enabled == true && poolConfig.Banning?.MinerEffortPercent.HasValue == true && poolConfig.Banning?.MinerEffortTime.HasValue == true)
+        {
+            var lastBlockTime = await cf.Run(con => blocksRepo.GetLastPoolBlockTimeAsync(con, poolConfig.Id, ct));
+            DateTime dateStart = (lastBlockTime.HasValue) ? lastBlockTime.Value : connection.Context.Created;
+            var minerEffort = await cf.Run(con => shareRepo.GetMinerEffortBetweenCreatedAsync(con, poolConfig.Id, connection.Context.Miner, dateStart, clock.Now, ct));
+            if(minerEffort.HasValue)
+            {
+                logger.Debug(() => $"[{connection.Context.Miner}] Checking effort for worker: {minerEffort.Value}%");
+
+                if(minerEffort.Value >= poolConfig.Banning.MinerEffortPercent.Value)
+                {
+                    banManager.Ban(connection.RemoteEndpoint.Address, TimeSpan.FromSeconds(poolConfig.Banning.MinerEffortTime.Value));
+
+                    throw new Exception($"Detected suspicious over-sharing-worker: Current effort over {poolConfig.Banning.MinerEffortPercent.Value}%. Banning worker for {poolConfig.Banning.MinerEffortTime.Value} seconds");
+                }
+            }
+        }
     }
 
     protected void ZombieCheck(StratumConnection connection)

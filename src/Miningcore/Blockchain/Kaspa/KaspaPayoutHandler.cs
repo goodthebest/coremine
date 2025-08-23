@@ -47,7 +47,7 @@ public class KaspaPayoutHandler : PayoutHandlerBase,
     }
 
     protected readonly IComponentContext ctx;
-    protected kaspad.KaspadRPC.KaspadRPCClient rpc;
+    protected kaspad.RPC.RPCClient rpc;
     protected kaspaWalletd.KaspaWalletdRPC.KaspaWalletdRPCClient walletRpc;
     private string network;
     private KaspaPoolConfigExtra extraPoolConfig;
@@ -87,7 +87,7 @@ public class KaspaPayoutHandler : PayoutHandlerBase,
         // we need a stream to communicate with Kaspad
         var stream = rpc.MessageStream(null, null, ct);
         
-        var request = new kaspad.KaspadMessage();
+        var request = new kaspad.KaspadRequest();
         request.GetCurrentNetworkRequest = new kaspad.GetCurrentNetworkRequestMessage();
         await Guard(() => stream.RequestStream.WriteAsync(request),
             ex=> throw new PaymentException($"Error writing a request in the communication stream '{ex.GetType().Name}' : {ex}"));
@@ -131,7 +131,7 @@ public class KaspaPayoutHandler : PayoutHandlerBase,
             {
                 var block = page[j];
                 
-                var request = new kaspad.KaspadMessage();
+                var request = new kaspad.KaspadRequest();
                 request.GetBlockRequest = new kaspad.GetBlockRequestMessage
                 {
                     Hash = (string) block.Hash,
@@ -157,7 +157,7 @@ public class KaspaPayoutHandler : PayoutHandlerBase,
                     {
                         logger.Info(() => $"[{LogCategory}] Block {block.BlockHeight} uses a custom minimum confirmations calculation [{minConfirmations}]");
 
-                        var requestConfirmations = new kaspad.KaspadMessage();
+                        var requestConfirmations = new kaspad.KaspadRequest();
                         requestConfirmations.GetBlocksRequest = new kaspad.GetBlocksRequestMessage
                         {
                             LowHash = (string) block.Hash,
@@ -190,7 +190,7 @@ public class KaspaPayoutHandler : PayoutHandlerBase,
                             {
                                 logger.Debug(() => $"[{LogCategory}] Block {block.BlockHeight} contains child: {childrenHash}");
 
-                                var requestChildren = new kaspad.KaspadMessage();
+                                var requestChildren = new kaspad.KaspadRequest();
                                 requestChildren.GetBlockRequest = new kaspad.GetBlockRequestMessage
                                 {
                                     Hash = childrenHash,

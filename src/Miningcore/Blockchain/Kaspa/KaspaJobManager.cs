@@ -52,7 +52,7 @@ public class KaspaJobManager : JobManagerBase<KaspaJob>
     private DaemonEndpointConfig[] daemonEndpoints;
     private DaemonEndpointConfig[] walletDaemonEndpoints;
     private KaspaCoinTemplate coin;
-    private kaspad.KaspadRPC.KaspadRPCClient rpc;
+    private kaspad.RPC.RPCClient rpc;
     private kaspaWalletd.KaspaWalletdRPC.KaspaWalletdRPCClient walletRpc;
     private string network;
     private readonly List<KaspaJob> validJobs = new();
@@ -82,11 +82,11 @@ public class KaspaJobManager : JobManagerBase<KaspaJob>
                         var streamNotifyNewBlockTemplate = rpc.MessageStream(null, null, cts.Token);
 
                         // we need a request for subscribing to NotifyNewBlockTemplate
-                        var requestNotifyNewBlockTemplate = new kaspad.KaspadMessage();
+                        var requestNotifyNewBlockTemplate = new kaspad.KaspadRequest();
                         requestNotifyNewBlockTemplate.NotifyNewBlockTemplateRequest = new kaspad.NotifyNewBlockTemplateRequestMessage();
 
                         // we need a request for retrieving BlockTemplate
-                        var requestBlockTemplate = new kaspad.KaspadMessage();
+                        var requestBlockTemplate = new kaspad.KaspadRequest();
                         requestBlockTemplate.GetBlockTemplateRequest = new kaspad.GetBlockTemplateRequestMessage
                         {
                             PayAddress = poolConfig.Address,
@@ -435,7 +435,7 @@ public class KaspaJobManager : JobManagerBase<KaspaJob>
             // we need a stream to communicate with Kaspad
             var stream = rpc.MessageStream(null, null, ct);
 
-            var request = new kaspad.KaspadMessage();
+            var request = new kaspad.KaspadRequest();
             request.EstimateNetworkHashesPerSecondRequest = new kaspad.EstimateNetworkHashesPerSecondRequestMessage
             {
                 WindowSize = 1000,
@@ -449,7 +449,7 @@ public class KaspaJobManager : JobManagerBase<KaspaJob>
                 break;
             }
 
-            request = new kaspad.KaspadMessage();
+            request = new kaspad.KaspadRequest();
             request.GetConnectedPeerInfoRequest = new kaspad.GetConnectedPeerInfoRequestMessage();
             await stream.RequestStream.WriteAsync(request);
             await foreach (var info in stream.ResponseStream.ReadAllAsync(ct))
@@ -473,7 +473,7 @@ public class KaspaJobManager : JobManagerBase<KaspaJob>
         // we need a stream to communicate with Kaspad
         var stream = rpc.MessageStream(null, null, ct);
 
-        var request = new kaspad.KaspadMessage();
+        var request = new kaspad.KaspadRequest();
         request.GetInfoRequest = new kaspad.GetInfoRequestMessage();
         await Guard(() => stream.RequestStream.WriteAsync(request),
             ex=> logger.Debug(ex));
@@ -502,7 +502,7 @@ public class KaspaJobManager : JobManagerBase<KaspaJob>
             // we need a stream to communicate with Kaspad
             var stream = rpc.MessageStream(null, null, ct);
             
-            var request = new kaspad.KaspadMessage();
+            var request = new kaspad.KaspadRequest();
             request.SubmitBlockRequest = new kaspad.SubmitBlockRequestMessage
             {
                 Block = block,
@@ -690,7 +690,7 @@ public class KaspaJobManager : JobManagerBase<KaspaJob>
         // we need a stream to communicate with Kaspad
         var stream = rpc.MessageStream(null, null, ct);
         
-        var request = new kaspad.KaspadMessage();
+        var request = new kaspad.KaspadRequest();
         request.GetCurrentNetworkRequest = new kaspad.GetCurrentNetworkRequestMessage();
         await Guard(() => stream.RequestStream.WriteAsync(request),
             ex=> throw new PoolStartupException($"Error writing a request in the communication stream '{ex.GetType().Name}' : {ex}", poolConfig.Id));
@@ -713,7 +713,7 @@ public class KaspaJobManager : JobManagerBase<KaspaJob>
         BlockchainStats.NetworkType = network;
         BlockchainStats.RewardType = "POW";
 
-        request = new kaspad.KaspadMessage();
+        request = new kaspad.KaspadRequest();
         request.GetInfoRequest = new kaspad.GetInfoRequestMessage();
         await Guard(() => stream.RequestStream.WriteAsync(request),
             ex=> throw new PoolStartupException($"Error writing a request in the communication stream '{ex.GetType().Name}' : {ex}", poolConfig.Id));
@@ -822,7 +822,7 @@ public class KaspaJobManager : JobManagerBase<KaspaJob>
         // we need a stream to communicate with Kaspad
         var stream = rpc.MessageStream(null, null, ct);
         
-        var request = new kaspad.KaspadMessage();
+        var request = new kaspad.KaspadRequest();
         request.GetInfoRequest = new kaspad.GetInfoRequestMessage();
         await Guard(() => stream.RequestStream.WriteAsync(request),
             ex=> logger.Debug(ex));
@@ -870,7 +870,7 @@ public class KaspaJobManager : JobManagerBase<KaspaJob>
         // we need a stream to communicate with Kaspad
         var stream = rpc.MessageStream(null, null, ct);
         
-        var request = new kaspad.KaspadMessage();
+        var request = new kaspad.KaspadRequest();
         request.GetConnectedPeerInfoRequest = new kaspad.GetConnectedPeerInfoRequestMessage();
         await Guard(() => stream.RequestStream.WriteAsync(request),
             ex=> logger.Debug(ex));
@@ -905,7 +905,7 @@ public class KaspaJobManager : JobManagerBase<KaspaJob>
             // we need a stream to communicate with Kaspad
             var stream = rpc.MessageStream(null, null, ct);
 
-            var request = new kaspad.KaspadMessage();
+            var request = new kaspad.KaspadRequest();
             request.GetInfoRequest = new kaspad.GetInfoRequestMessage();
             await Guard(() => stream.RequestStream.WriteAsync(request),
                 ex=> logger.Debug(ex));

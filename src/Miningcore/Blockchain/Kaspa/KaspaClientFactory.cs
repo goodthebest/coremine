@@ -15,7 +15,7 @@ namespace Miningcore.Blockchain.Kaspa;
 
 public static class KaspaClientFactory
 {
-    public static kaspad.KaspadRPC.KaspadRPCClient CreateKaspadRPCClient(DaemonEndpointConfig[] daemonEndpoints, string protobufDaemonRpcServiceName)
+    public static kaspad.RPC.RPCClient CreateKaspadRPCClient(DaemonEndpointConfig[] daemonEndpoints, string protobufDaemonRpcServiceName)
     {
         var daemonEndpoint = daemonEndpoints.First();
 
@@ -44,7 +44,7 @@ public static class KaspaClientFactory
             MaxSendMessageSize = 2097152 // 2MB
         });
 
-        return new kaspad.KaspadRPC.KaspadRPCClient(new kaspad.KaspadRPC(protobufDaemonRpcServiceName), channel);
+        return new kaspad.RPC.RPCClient(channel);
     }
 
         public static kaspaWalletd.KaspaWalletdRPC.KaspaWalletdRPCClient CreateKaspaWalletdRPCClient(DaemonEndpointConfig[] daemonEndpoints, string protobufWalletRpcServiceName)

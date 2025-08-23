@@ -18,7 +18,6 @@ using Miningcore.Util;
 using Block = Miningcore.Persistence.Model.Block;
 using Contract = Miningcore.Contracts.Contract;
 using static Miningcore.Util.ActionUtils;
-using kaspaWalletd = Miningcore.Blockchain.Kaspa.KaspaWalletd;
 using kaspad = Miningcore.Blockchain.Kaspa.Kaspad;
 
 namespace Miningcore.Blockchain.Kaspa;
@@ -48,7 +47,7 @@ public class KaspaPayoutHandler : PayoutHandlerBase,
 
     protected readonly IComponentContext ctx;
     protected kaspad.KaspadRPC.KaspadRPCClient rpc;
-    protected kaspaWalletd.KaspaWalletdRPC.KaspaWalletdRPCClient walletRpc;
+    protected IKaspaSigner signer;
     private string network;
     private KaspaPoolConfigExtra extraPoolConfig;
     private KaspaPaymentProcessingConfigExtra extraPoolPaymentProcessingConfig;
@@ -73,16 +72,12 @@ public class KaspaPayoutHandler : PayoutHandlerBase,
             .Where(x => string.IsNullOrEmpty(x.Category))
             .ToArray();
         
-        // extract wallet daemon endpoints
-        var walletDaemonEndpoints = pc.Daemons
-            .Where(x => x.Category?.ToLower() == KaspaConstants.WalletDaemonCategory)
-            .ToArray();
-
-        if(walletDaemonEndpoints.Length == 0)
-            throw new PaymentException("Wallet-RPC daemon is not configured (Daemon configuration for kaspa-pools require an additional entry of category 'wallet' pointing to the wallet daemon)");
-
         rpc = KaspaClientFactory.CreateKaspadRPCClient(daemonEndpoints, extraPoolConfig?.ProtobufDaemonRpcServiceName ?? KaspaConstants.ProtobufDaemonRpcServiceName);
-        walletRpc = KaspaClientFactory.CreateKaspaWalletdRPCClient(walletDaemonEndpoints, extraPoolConfig?.ProtobufWalletRpcServiceName ?? KaspaConstants.ProtobufWalletRpcServiceName);
+
+        signer = ctx.Resolve<IKaspaSigner>() ?? throw new PaymentException("Kaspa transaction signer is not configured");
+
+        if(extraPoolPaymentProcessingConfig?.Signer != null)
+            await signer.ConfigureAsync(extraPoolPaymentProcessingConfig.Signer, ct);
         
         // we need a stream to communicate with Kaspad
         var stream = rpc.MessageStream(null, null, ct);
@@ -337,13 +332,11 @@ public class KaspaPayoutHandler : PayoutHandlerBase,
                 logger.Warn(()=> $"[{LogCategory}] Address {pair.Key} is not valid : {errorKaspaAddressUtility}");
         }
         
-        var callGetBalance = walletRpc.GetBalanceAsync(new kaspaWalletd.GetBalanceRequest());
-        var walletBalances = await Guard(() => callGetBalance.ResponseAsync,
+        var walletBalances = await Guard(() => signer.GetBalanceAsync(ct),
             ex=> logger.Debug(ex));
-        callGetBalance.Dispose();
-        
-        var walletBalancePending = (decimal) (walletBalances?.Pending == null ? 0 : walletBalances?.Pending) / KaspaConstants.SmallestUnit;
-        var walletBalanceAvailable = (decimal) (walletBalances?.Available == null ? 0 : walletBalances?.Available) / KaspaConstants.SmallestUnit;
+
+        var walletBalancePending = walletBalances?.Pending ?? 0m;
+        var walletBalanceAvailable = walletBalances?.Available ?? 0m;
         
         logger.Info(() => $"[{LogCategory}] Current wallet balance - Total: [{FormatAmount(walletBalancePending + walletBalanceAvailable)}] - Pending: [{FormatAmount(walletBalancePending)}] - Available: [{FormatAmount(walletBalanceAvailable)}]");
 
@@ -374,22 +367,13 @@ public class KaspaPayoutHandler : PayoutHandlerBase,
 
                 logger.Info(()=> $"[{LogCategory}] [{transferId}] Sending {FormatAmount(amount)} to {address}");
                 
-                var callSend = walletRpc.SendAsync(new kaspaWalletd.SendRequest {
-                    ToAddress = address.ToLower(),
-                    Amount = (ulong) (amount * KaspaConstants.SmallestUnit),
-                    Password = extraPoolPaymentProcessingConfig?.WalletPassword ?? null,
-                    UseExistingChangeAddress = true,
-                    IsSendAll = false,
-                });
-                var sendTransaction = await Guard(() => callSend.ResponseAsync,
-                    ex=> throw new PaymentException($"[{transferId}] kaspawalletd returned error: {ex}"));
-                callSend.Dispose();
+                var txId = await Guard(() => signer.SendTransactionAsync(address.ToLower(), amount, extraPoolPaymentProcessingConfig?.WalletPassword, ct),
+                    ex=> throw new PaymentException($"[{transferId}] signer returned error: {ex}"));
 
                 // check result
-                var txId = sendTransaction.TxIDs.First();
-
+                
                 if(string.IsNullOrEmpty(txId))
-                    throw new Exception($"[{transferId}] kaspawalletd did not return a transaction id!");
+                    throw new Exception($"[{transferId}] signer did not return a transaction id!");
                 else
                     logger.Info(() => $"[{LogCategory}] [{transferId}] Payment transaction id: {txId}");
 

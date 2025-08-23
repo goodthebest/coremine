@@ -18,4 +18,9 @@ public class KaspaPaymentProcessingConfigExtra
     /// Default: 2
     /// </summary>
     public int? MaxDegreeOfParallelPayouts { get; set; }
+
+    /// <summary>
+    /// Configuration options for the transaction signer
+    /// </summary>
+    public KaspaSignerConfig Signer { get; set; }
 }
